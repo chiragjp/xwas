@@ -1,7 +1,7 @@
 ## sample data file
-## do one regression
 ## script to create scripts
 ## script to collect results
 ## script to compute FDR
+## repeated measures
 ## add in support for fixed effect/random effect meta analyses
 ## correlation heatmap

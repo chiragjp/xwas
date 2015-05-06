@@ -1,6 +1,9 @@
 # Chirag Patel
 # chirag_patel@hms.harvard.edu
 ## workhorse script to do linear associations
+## 5/6/2015
+## to run a sample: 
+## > Rscript linear.R -f ../data/sample_data.Rdata -d LBXGLU -v LBXGTC -a ../data/adjustment_variables.Rdata
 source('utility.R')
 library(getopt)
 
@@ -16,7 +19,8 @@ spec <- matrix(c(
 				),
 				nrow=8, byrow=TRUE)
 opt <- getopt(spec)
-mainTab <- read.csv(dat$filein)
+##
+
 outdir <- opt$outdir
 varname <- opt$varname
 depVar <- opt$depvar; 
@@ -29,6 +33,10 @@ if(is.null(opt$filein)) {
 
 if(!is.null(opt$intvarname)) {
 	intVar <- opt$intvarname
+}
+
+if(is.null(opt$outdir)) {
+	outdir <- '.'
 }
 
 permute <- 0
@@ -45,8 +53,9 @@ if(!is.null(opt$adjustment_file)) {
 	load(opt$adjustment_file)
 }
 
+load(opt$filein) ### load in the file
 
-keepVars <- c(depVar, varname, adjustmentVariables, surveyVariables)
+keepVars <- c(depVar, varname, adjustmentVariables)
 dat <- mainTab[complete.cases(mainTab[, keepVars]), keepVars]
 
 depVar.formula <- depVar
@@ -83,12 +92,10 @@ if(permute == 0) {
 
 if(!is.null(summaryFrame)) {
 	summaryFrame$varname <- varname
-	summaryFrame$series <- seriesName
 }
 
 ## save result
 filename <- sprintf('%s_%s.Rdata', depVar, varname)
 
-	
 fileout <- file.path(outdir, filename)
 save(summaryFrame, varname, depVar, doForm, permute, file=fileout)
