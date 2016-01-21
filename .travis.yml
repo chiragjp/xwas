@@ -14,4 +14,3 @@ env:
     - R_CHECK_TIME="TRUE"
     - R_CHECK_TESTS="TRUE"
     - R_CHECK_TIMINGS_="0"
-
