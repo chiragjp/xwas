@@ -15,9 +15,10 @@ TODO
 - get to work with HIV dataset
 - repeated measures
 
-REFERENCES (Temporary)
+REFERENCES
 - Karl Broman "Getting your R package on CRAN" [<a href="http://kbroman.org/pkg_primer/pages/cran.html">web</a>]
 - Karl Broman "Writing R packages: Tools for Reproducible Research" [<a href="http://kbroman.org/Tools4RR/assets/lectures/08_rpack_withnotes.pdf">pdf</a>]
 - R Admin Pages "CRAN" [<a href="https://cran.r-project.org/doc/manuals/r-release/R-admin.html">web</a>]
 - David Diez "Building R Packages" [<a href="http://www.hsph.harvard.edu/statinformatics/soft/files/buildingrpackages.pdf">pdf</a>] 
 - Friedrich Leisch "Creating R Packages: A Tutorial" [<a href="https://cran.r-project.org/doc/contrib/Leisch-CreatingPackages.pdf">pdf</a>]
+- Alyssa Frazee "RSkittleBrewer" [<a href="https://github.com/alyssafrazee/RSkittleBrewer">web</a>]
