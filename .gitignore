@@ -1,0 +1,7 @@
+..Rcheck
+.Rproj
+.Rhistory
+.RData
+.*~
+*~
+xwas_*.tar.gz
