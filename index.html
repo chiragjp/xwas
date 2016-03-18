@@ -31,14 +31,18 @@
         <h3>
 <a id="an-r-package-for-x-wide-association-analyses" class="anchor" href="#an-r-package-for-x-wide-association-analyses" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>An R package for X-Wide Association Analyses</h3>
 
-<p>The <code>xwas</code> package was originally developed from research done in the exposome lab of the Department for Biomedical Informatics at Harvard Medical School.</p>
+<p>The <code>xwas</code> package was originally developed from research done in the exposome lab of the Department for Biomedical Informatics at Harvard Medical School. </p>
+
+<p>During the course of investigation on the behavioral and environmental causes of mortality we found that studies have historically only evaluated one or a few hand-picked factors. This approach lacks the rigor of a systematic approach found in other data sciences and the lack of standardization in analytical approach can lead to spurious results. In some fields such as genomics, Genome-Wide Association Studies (GWAS) have resulted in a robust body of reproducible findings and we sought to take an analogous approach to environmentally- and behaviorally-based studies. This easy-to-use package provided here is a much needed framework to extend the Cox proportional hazards regression based approach to a more generalized audience.</p>
+
+<p>DISCLAIMER: this package is provided as-is and we are not responsible for any issue resulting from is use. </p>
 
 <h3>
 <a id="user-quickstart" class="anchor" href="#user-quickstart" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>User Quickstart</h3>
 
 <p>We are working on a submission of this package to CRAN and hope future installations will be the simple 1-liner below from within R. However, this is currently <em>NOT</em> a viable method of installing the <code>xwas</code> package.</p>
 
-<pre><code># NOT CURRENTLY VIABLE!
+<pre><code># From CRAN
 &gt; install.packages("xwas")
 </code></pre>
 
@@ -74,6 +78,12 @@ $ R
 </code></pre>
 
 <h3>
+<a id="using-the-package" class="anchor" href="#using-the-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using the Package</h3>
+
+<pre><code>data(nhanes)
+</code></pre>
+
+<h3>
 <a id="support-or-contact" class="anchor" href="#support-or-contact" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Support or Contact</h3>
 
 <p>The xwas package was originally authored by <a href="https://github.com/chiragjp" class="user-mention">@chiragjp</a> and currently maintained by <a href="https://github.com/nampho2" class="user-mention">@nampho2</a>.</p>
@@ -84,8 +94,7 @@ $ R
 <a id="references" class="anchor" href="#references" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>References</h3>
 
 <ol>
-<li>asdf</li>
-<li>asdf</li>
+<li>Patel CJ, Rehkopf DH, Leppert JT, Bortz WM, Cullen MR, Chertow GM, and JPA Ioannidis. "Systematic evaluation of environmental and behavioural factors associated with all-cause mortality in the United States National Health and Nutrition Examination Survey." <em>International Journal of Epidemiology</em> (2013) 1–16</li>
 </ol>
       </section>
       <footer>
