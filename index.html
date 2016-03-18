@@ -31,40 +31,45 @@
         <h3>
 <a id="an-r-package-for-x-wide-association-analyses" class="anchor" href="#an-r-package-for-x-wide-association-analyses" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>An R package for X-Wide Association Analyses</h3>
 
-<p>Introduction here.</p>
+<p>The <code>xwas</code> package was originally developed from research done in the exposome lab of the Department for Biomedical Informatics at Harvard Medical School.</p>
 
 <h3>
-<a id="quickstart---users" class="anchor" href="#quickstart---users" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quickstart - Users</h3>
+<a id="user-quickstart" class="anchor" href="#user-quickstart" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>User Quickstart</h3>
 
-<p>From CRAN.</p>
+<p>We are working on a submission of this package to CRAN and hope future installations will be the simple 1-liner below from within R. However, this is currently <em>NOT</em> a viable method of installing the <code>xwas</code> package.</p>
 
-<pre><code># Not viable, we are currently working on a submission to CRAN.
-install.packages("xwas")
+<pre><code># NOT CURRENTLY VIABLE!
+&gt; install.packages("xwas")
 </code></pre>
 
-<p>Using the source from Github.</p>
+<p>Installing <code>xwas</code> using the source code from Github within R.</p>
 
-<pre><code># This installs devtools package, if not already installed
+<pre><code># Install and load the devtools package
 &gt; install.packages("devtools")
-# This loads devtools
 &gt; library(devtools)
 
-# This downloads the latest xwas production package from Github
+# Download and install the latest stable xwas version from Github
 &gt; install_github('chiragjp/xwas')
-# This downloads the latest xwas development package from Github
-&gt; install_github('nampho2/xwas')
 
+# Load the xwas library
 &gt; library(xwas)
 </code></pre>
 
 <h3>
-<a id="quickstart---contributors" class="anchor" href="#quickstart---contributors" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Quickstart - Contributors</h3>
+<a id="for-developers" class="anchor" href="#for-developers" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>For Developers</h3>
 
-<pre><code>$ git clone git@github.com:nampho2/xwas.git
+<p>This method is for active contributors to <code>xwas</code> and developers who want the latest version in development. It requires cloning the source code from Github and building the package locally using the <code>Makefile</code> in a Terminal before loading <code>xwas</code> in R.</p>
 
+<pre><code># Grab the bleeding edge source
+$ git clone git@github.com:nampho2/xwas.git
+
+# Build the R package in the cloned directory
+$ cd xwas
 $ make deploy
+
 $ R
 
+# Load the xwas library
 &gt; library(xwas)
 </code></pre>
 
