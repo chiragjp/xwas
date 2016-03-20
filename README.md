@@ -15,6 +15,26 @@ TODO
 - get to work with HIV dataset
 - repeated measures
 
+DEVELOPERS
+
+```
+# make edits and test the build locally
+xwas$ make
+
+# install and run
+xwas$ make install
+xwas$ R
+
+# test the code
+> library(xwas)
+>
+
+# commit changes and push to kick off travis build
+xwas$ git add <list of files>
+xwas$ git commit -m "description of changes"
+xwas$ git push
+```
+
 REFERENCES
 - Karl Broman "Getting your R package on CRAN" [<a href="http://kbroman.org/pkg_primer/pages/cran.html">web</a>]
 - Karl Broman "Writing R packages: Tools for Reproducible Research" [<a href="http://kbroman.org/Tools4RR/assets/lectures/08_rpack_withnotes.pdf">pdf</a>]
