@@ -82,7 +82,21 @@ $ R
 <h3>
 <a id="using-the-package" class="anchor" href="#using-the-package" aria-hidden="true"><span aria-hidden="true" class="octicon octicon-link"></span></a>Using the Package</h3>
 
+<p>Load the included NHANES data set for testing.</p>
+
 <pre><code>data(nhanes)
+</code></pre>
+
+<p>Use the main <code>xwas</code> function for regression analysis. You need to pass the dependent variable, the independent variable, and the variables you are adjusting for. An example is shown below,</p>
+
+<pre><code>&gt; xwas(depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "LBXGTC"))
+I(scale(LBXGLU)) ~ I(scale(LBXGTC)) + female + LBXGTC
+&lt;environment: 0x7ffc52816898&gt;
+                    Estimate Std. Error   t value     Pr(&gt;|t|)    N varname
+(Intercept)       0.09270946 0.02468654  3.755466 1.761870e-04 3115  LBXGTC
+I(scale(LBXGTC))  0.20781371 0.01747808 11.889966 6.483765e-32 3115  LBXGTC
+female           -0.18571702 0.03495058 -5.313703 1.149915e-07 3115  LBXGTC
+&gt; 
 </code></pre>
 
 <h3>
