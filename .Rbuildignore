@@ -3,6 +3,8 @@ Makefile
 ^\.Rproj\.user$
 .Rbuildignore.*
 .gitignore.*
-.travis.yml.*
+^\.travis\.yml.*
 ..Rcheck
 .git
+.git/objects/
+data-raw/
