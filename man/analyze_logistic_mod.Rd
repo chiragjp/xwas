@@ -2,7 +2,7 @@
 % Please edit documentation in R/xwas.R
 \name{analyze_logistic_mod}
 \alias{analyze_logistic_mod}
-\title{Main worker function to perform binary outcome associations.}
+\title{analyze_logistic_mod}
 \usage{
 analyze_logistic_mod(formula, dat, ...)
 }

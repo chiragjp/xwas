@@ -2,7 +2,7 @@
 % Please edit documentation in R/xwas.R
 \name{analyze_linear_mod}
 \alias{analyze_linear_mod}
-\title{Main worker function to perform linear associations.}
+\title{analyze_linear_mod}
 \usage{
 analyze_linear_mod(formula, dat, ...)
 }

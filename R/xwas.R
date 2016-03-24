@@ -132,6 +132,8 @@ logistic_mod <- function(formula, dat, ...) {
     return(mod)
 }
 
+#' analyze_linear_mod
+#' 
 #' Main worker function to perform linear associations.
 #'
 #' @param formula an R formula class object.
@@ -163,6 +165,8 @@ analyze_linear_mod <- function(formula, dat, ...) {
     return(summaryFrame)
 }
 
+#' analyze_logistic_mod
+#'
 #' Main worker function to perform binary outcome associations.
 #'
 #' @param formula an R formula class object.
@@ -194,7 +198,10 @@ analyze_logistic_mod <- function(formula, dat, ...) {
     return(summaryFrame)
 }
 
-#' Performs X-Wide Association Analysis.
+#' xlm
+#'
+#' Performs a singular linear regression or binary outcomes association study. It requires you to specify the exact column variable 
+#' and other permutation details. It does a lot of blind analysis and requires the xwas function to determine other meta-characteristics.
 #' 
 #' @param data is a data.frame containing the data to perform analysis on.
 #' @param depvar a character vector with a column name for the dependent variable.
@@ -202,16 +209,18 @@ analyze_logistic_mod <- function(formula, dat, ...) {
 #' @param adjvars a list of variables to adjust for in the regression.
 #' @param permute is an optional parameter of how many permutations to perform in the bootstrap.
 #' @param categorical is a binary option representing whether or not the variable is categorical.
+#' @param verbose is a boolean that determines if we print extra information. Not recommend for an XWAS, only one off analyses.
 #' 
 #' @return A data.frame object representing the regression.
 #' 
 #' @examples
 #' \dontrun{
-#' xwas()
+#' xlm()
+#' xlm(data=nhanes, depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "RIDAGEYR"), permute=10)
 #' }
 #' 
 #' @export
-xwas <- function(data, depvar, varname, adjvars=c(), permute=0, categorical=0) {
+xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categorical=0, verbose=TRUE) {
     if (permute < 0) {
         stop("non-negative value required for permute.")
     }
@@ -219,7 +228,8 @@ xwas <- function(data, depvar, varname, adjvars=c(), permute=0, categorical=0) {
     intVar <- NULL
     
     keepVars <- c(depvar, varname, adjvars)
-    dat <- data[complete.cases(data[, keepVars]), keepVars]
+    #dat <- data[complete.cases(data[, keepVars]), keepVars]
+    dat <- data
     
     depVar.formula <- depvar
     baseform <- NULL
@@ -239,28 +249,88 @@ xwas <- function(data, depvar, varname, adjvars=c(), permute=0, categorical=0) {
     }
     
     doForm <- addToBase(baseform, adjvars)
-    print(doForm)
+    if (verbose) {
+       print(doForm)
+    }
     
     summaryFrame <- c()
+    summaryFrameRaw <- list()
+    
     if (permute) {
 	## run permute analysis
 	## do a parametric bootstrap
 	nullmod.m <- linear_mod(nullmod, dat)
 	responses <- resid(nullmod.m)
-	
+
 	for (i in 1:permute) {
 	    dat[, depvar] <- sample(responses)
-	    frm <- analyze_linear_mod(doForm, dat)
-	    frm$permute_index <- i
-	    summaryFrame <- rbind(summaryFrame, frm)
+
+	    # legacy character vector implementation
+	    #frm <- analyze_linear_mod(doForm, dat)
+	    #frm$permute_index <- i
+	    #summaryFrame <- rbind(summaryFrame, frm)
+
+	    # going with lists!
+	    summaryFrameRaw[[i]] <- analyze_linear_mod(doForm, dat)
 	}
     } else {
         summaryFrame <- analyze_linear_mod(doForm, dat)
     }
-    
+
+    # process permutation analysis into a singular data.frame
+    # returns mean values for each permutation
+    if (permute > 0 & length(summaryFrameRaw) > 0) {
+       summaryFrame <- summaryFrameRaw[[1]]
+
+       # get the mean value for each of the first 4 columns of the bootstrap
+       # Estimate   Std. Error    t value     Pr(>|t|)
+       for (i in 1:4) {
+           tmp <- sapply(summaryFrameRaw, function(x) { return( x[, i] ) })
+	   summaryFrame[, i] <- apply(tmp, 1, mean)
+       }
+    }
+
     if (!is.null(summaryFrame)) {
         summaryFrame$varname <- varname
+        summaryFrame$permute <- permute	
     }
     
     return(summaryFrame)
+}
+
+#' xwas
+#' 
+#' Used to systematically perform an xlm across all variables. This function contains a lot of the logic for a systematic analysis
+#' including logic to determine variable characteristics. 
+#'
+#' @param data is the data.frame containing what to analyze.
+#' @param depvar is the outcome of the study we are looking to analyze in the context of multiple factors.
+#' @param permute is the number of times to bootstrap each variable analysis in the xwas.
+#'
+#' @return A data.frame representing the output.
+#'
+#' @examples
+#' \dontrun{
+#' xwas()
+#' xwas(data=nhanes, depvar="LBXGLU", permute=100)
+#' }
+#'
+#' @export
+xwas <- function(data, depvar=NULL, permute=0) {
+    if (permute < 0) {
+        stop("non-negative value required for permute.")
+    }
+
+    if (is.null(depvar)) {
+        stop("need to specify the outcome variable.")
+    }
+
+    test <- list()
+    space <- colnames(data)
+    space <- space[!space %in% depvar] # remove the outcome from the variable space to control and explore
+    
+    for (varname in space) {
+    	adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
+    	test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=adjvars, permute=permute, verbose=FALSE)
+    }
 }

@@ -2,32 +2,28 @@
 % Please edit documentation in R/xwas.R
 \name{xwas}
 \alias{xwas}
-\title{Performs X-Wide Association Analysis.}
+\title{xwas}
 \usage{
-xwas(data, depvar, varname, adjvars = c(), permute = 0, categorical = 0)
+xwas(data, depvar = NULL, permute = 0)
 }
 \arguments{
-\item{data}{is a data.frame containing the data to perform analysis on.}
+\item{data}{is the data.frame containing what to analyze.}
 
-\item{depvar}{a character vector with a column name for the dependent variable.}
+\item{depvar}{is the outcome of the study we are looking to analyze in the context of multiple factors.}
 
-\item{varname}{a character vector with a column name for the independent variable.}
-
-\item{adjvars}{a list of variables to adjust for in the regression.}
-
-\item{permute}{is an optional parameter of how many permutations to perform in the bootstrap.}
-
-\item{categorical}{is a binary option representing whether or not the variable is categorical.}
+\item{permute}{is the number of times to bootstrap each variable analysis in the xwas.}
 }
 \value{
-A data.frame object representing the regression.
+A data.frame representing the output.
 }
 \description{
-Performs X-Wide Association Analysis.
+Used to systematically perform an xlm across all variables. This function contains a lot of the logic for a systematic analysis
+including logic to determine variable characteristics.
 }
 \examples{
 \dontrun{
 xwas()
+xwas(data=nhanes, depvar="LBXGLU", permute=100)
 }
 
 }
