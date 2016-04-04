@@ -16,10 +16,10 @@
 addToBase <- function(base_formula, adjustingVariables) {
     if (length(adjustingVariables)) {
        addStr <- as.formula(sprintf('~ . + %s', paste(adjustingVariables, collapse='+')))
-       form <- update.formula(base_formula, addStr)
+       base_formula <- update.formula(base_formula, addStr)
     }
 	
-    return(form)
+    return(base_formula)
 }
 
 #' @export
@@ -228,8 +228,14 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
     intVar <- NULL
     
     keepVars <- c(depvar, varname, adjvars)
-    #dat <- data[complete.cases(data[, keepVars]), keepVars]
-    dat <- data
+    dat <- data[complete.cases(data[, keepVars]), keepVars]
+
+    if (nrow(dat) < 1) {
+        if(verbose) {
+            warning("insufficient number of cases.")
+	}
+        return(NULL)
+    }
     
     depVar.formula <- depvar
     baseform <- NULL
@@ -305,7 +311,9 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #'
 #' @param data is the data.frame containing what to analyze.
 #' @param depvar is the outcome of the study we are looking to analyze in the context of multiple factors.
+#' @param adjvars is a vector of variables to adjust for, if not specified we will scan all variables without adjusting on a first pass.
 #' @param permute is the number of times to bootstrap each variable analysis in the xwas.
+#' @param verbose is a boolean to print extra information.
 #'
 #' @return A data.frame representing the output.
 #'
@@ -316,21 +324,62 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #' }
 #'
 #' @export
-xwas <- function(data, depvar=NULL, permute=0) {
+xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, verbose=TRUE) {
+    # require a non-negative set of permutations
     if (permute < 0) {
         stop("non-negative value required for permute.")
     }
 
-    if (is.null(depvar)) {
-        stop("need to specify the outcome variable.")
+    # need an outcome to test for
+    if (is.null(depvar) | nchar(depvar) < 1) {
+        stop("need to specify a valid outcome variable.")
     }
 
     test <- list()
-    space <- colnames(data)
+    space <- NULL
+
+    if (is.null(adjvars)) {
+        space <- colnames(data) # all variable space to loop through
+    } else {
+        space <- adjvars # if we know what to adjust for then use that list instead of the entire space
+    }
+
+    # R formulas throw errors on invalid factors, e.g. numerics
+    # test the entire name space for validity
+    invalid <- c()
+    invalid <- space[!is.na(suppressWarnings( as.numeric(space) ))]
+
+    if (length(invalid)) {
+        stop(paste("the following column names are invalid:", invalid, "!"))
+    }
+    
     space <- space[!space %in% depvar] # remove the outcome from the variable space to control and explore
     
     for (varname in space) {
-    	adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
-    	test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=adjvars, permute=permute, verbose=FALSE)
+    	if (verbose & is.null(adjvars)) {
+    	    print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	} else {
+    	    print( paste("Adjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	}
+
+	if (is.null(adjvars)) { 
+	    test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, permute=permute, verbose=FALSE)
+	} else {
+	    re.adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
+    	    test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=re.adjvars, permute=permute, verbose=FALSE)
+	}
     }
+
+    if (length(test) & is.null(adjvars)) {
+        # adjust for p-value to figure out which depvars are significant
+	q <- p.adjust(lapply(test, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+
+	adjvars <- subset(q, q < 0.05)
+
+	# re-run xwas with a limited variable space
+	return(adjvars)
+        #test <- xwas(data=data, depvar=depvar, adjvars=names(adjvars), permute=permute, verbose=verbose)
+    }
+
+    return(test)
 }
