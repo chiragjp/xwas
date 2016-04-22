@@ -313,6 +313,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #' @param depvar is the outcome of the study we are looking to analyze in the context of multiple factors.
 #' @param adjvars is a vector of variables to adjust for, if not specified we will scan all variables without adjusting on a first pass.
 #' @param permute is the number of times to bootstrap each variable analysis in the xwas.
+#' @param n is the number of cores to use for the multi-core implementation, value must be > 1 or set to "MAX".
 #' @param verbose is a boolean to print extra information.
 #'
 #' @return A data.frame representing the output.
@@ -320,11 +321,11 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #' @examples
 #' \dontrun{
 #' xwas()
-#' xwas(data=nhanes, depvar="LBXGLU", permute=100)
+#' xwas(data=nhanes, depvar="LBXGLU", permute=10)
 #' }
 #'
 #' @export
-xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, verbose=TRUE) {
+xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) {
     # require a non-negative set of permutations
     if (permute < 0) {
         stop("non-negative value required for permute.")
@@ -337,6 +338,20 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, verbose=TRUE) {
 
     test <- list()
     space <- NULL
+    parallel <- NULL
+
+    # test for multicore validity at least 1 core or auto
+    if (is.character(n)) {
+        n <- toupper(n) # convert to uppercase for consistency
+    }
+    
+    if (n < 1 & n != "MAX") {
+        stop("issue with multicore or parallel xwas settings.")
+    } else if (n > 1 | n == "MAX") {
+        parallel <- TRUE
+    } else {
+        parallel <- FALSE
+    }
 
     if (is.null(adjvars)) {
         space <- colnames(data) # all variable space to loop through
@@ -354,21 +369,74 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, verbose=TRUE) {
     }
     
     space <- space[!space %in% depvar] # remove the outcome from the variable space to control and explore
-    
-    for (varname in space) {
-    	if (verbose & is.null(adjvars)) {
-    	    print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
-	} else {
-    	    print( paste("Adjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
-	}
 
-	if (is.null(adjvars)) { 
-	    test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, permute=permute, verbose=FALSE)
-	} else {
-	    re.adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
-    	    test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=re.adjvars, permute=permute, verbose=FALSE)
-	}
+    if (parallel) {
+        if (verbose) print("Doing multi core analysis.")
+        library(foreach)
+	library(doParallel)
+
+        # start cluster if multicore
+	if (parallel) maxcores <- detectCores()
+    
+        if (is.numeric(n)) {
+    	    if (n > maxcores) {
+	        warning("requested more cores than available, using the maximum.")
+	    	n <- maxcores - 1
+	    }
+    	}
+
+	if (n == "MAX") n <- maxcores - 1 # maximum cores!!!
+
+	if (verbose) print(paste("Initializing a", n, "core cluster."))
+    	cl <- makeCluster(n) # create the cluster
+
+    	registerDoParallel(cl)
+
+    	#
+    	# THIS IS THE MULTI CORE VERSION OF THE MAIN LOOP
+    	#
+    	tmp <- foreach (varname = space, .export=c("test", "xlm", "addToBase", "linear_mod", "analyze_linear_mod")) %dopar% {
+    	    if (verbose & is.null(adjvars)) {
+    	        print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	    } else {
+    	        print( paste("Adjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	    }
+
+	    if (is.null(adjvars)) { 
+	        test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, permute=permute, verbose=FALSE)
+	    } else {
+	        re.adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
+    	        test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=re.adjvars, permute=permute, verbose=FALSE)
+	    }
+    	}
+
+	if (verbose) print("Terminating cluster.")
+    	stopCluster(cl) # return resources if parallel option used
+    } else {
+        if (verbose) print("Doing single core analysis.")
+	
+        #
+        # THIS IS THE SINGLE CORE VERSION OF THE MAIN LOOP
+        #
+    	for (varname in space) {
+    	    if (verbose & is.null(adjvars)) {
+    	        print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	    } else {
+    	        print( paste("Adjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+	    }
+
+	    if (is.null(adjvars)) { 
+	        test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, permute=permute, verbose=FALSE)
+	    } else {
+	        re.adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
+    	    	test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=re.adjvars, permute=permute, verbose=FALSE)
+	    }
+        }
     }
+
+    #
+    # END LOOP DIVERGENCE
+    #
 
     if (length(test) & is.null(adjvars)) {
         # adjust for p-value to figure out which depvars are significant
