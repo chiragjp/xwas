@@ -198,6 +198,43 @@ analyze_logistic_mod <- function(formula, dat, ...) {
     return(summaryFrame)
 }
 
+#' analyze_survival_mod
+#'
+#' Main worker function to perform survival analysis. This functionality is still in BETA TESTING.
+#'
+#' @param formula an R formula class object.
+#' @param dat the data.frame to perform analysis on.
+#'
+#' @return A data.frame representing the survival outcome study.
+#'
+#' @examples
+#' \dontrun{
+#' analyze_survival_mod()
+#' }
+#'
+#' @export
+analyze_surival_mod <- function(formula, dat, ...) {
+    library(survival) # required to load coxph function
+    summaryFrame <- NULL
+    N <- nrow(dat)
+
+    # need to refactor formula object with survival object and TEST function
+    # e.g., coxph(Surv(PERMTH_EXM, MORTSTAT) ~ RIDAGEYR + female + LBXGLU, data=suvdat)
+    # see ?Surv
+    mod <- tryCatch(coxph(formula, dat, ...), error = function(e) {
+	       print(e)
+	       return(N);
+	   })
+
+    # not sure if this is necessary
+    #if (!is.null(mod)) {
+    #    summaryFrame <- as.data.frame(coef(summary(mod)))
+    #	summaryFrame$N <- N
+    #}
+
+    return(summaryFrame)
+}    
+
 #' xlm
 #'
 #' Performs a singular linear regression or binary outcomes association study. It requires you to specify the exact column variable 

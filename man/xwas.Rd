@@ -4,14 +4,21 @@
 \alias{xwas}
 \title{xwas}
 \usage{
-xwas(data, depvar = NULL, permute = 0)
+xwas(data, depvar = NULL, adjvars = NULL, permute = 0, n = 1,
+  verbose = TRUE)
 }
 \arguments{
 \item{data}{is the data.frame containing what to analyze.}
 
 \item{depvar}{is the outcome of the study we are looking to analyze in the context of multiple factors.}
 
+\item{adjvars}{is a vector of variables to adjust for, if not specified we will scan all variables without adjusting on a first pass.}
+
 \item{permute}{is the number of times to bootstrap each variable analysis in the xwas.}
+
+\item{n}{is the number of cores to use for the multi-core implementation, value must be > 1 or set to "MAX".}
+
+\item{verbose}{is a boolean to print extra information.}
 }
 \value{
 A data.frame representing the output.
@@ -23,7 +30,7 @@ including logic to determine variable characteristics.
 \examples{
 \dontrun{
 xwas()
-xwas(data=nhanes, depvar="LBXGLU", permute=100)
+xwas(data=nhanes, depvar="LBXGLU", permute=10)
 }
 
 }
