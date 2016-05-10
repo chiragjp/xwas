@@ -1,0 +1,59 @@
+---
+title: "xwas demo"
+#author: "Nam Pho"
+#date: "May 10, 2016"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## 1. Setup
+
+Skipping over these details for now. Assume you have compiled the library from latest Github source. Future will be CRAN (hopefully). The default build puts it into `~/.R_libs/xwas/` and assumes your R library is set accordingly.
+
+```{r}
+.libPaths()
+```
+
+Now you can load the `xwas` package and are good to go if no errors.
+
+```{r}
+library(xwas)
+```
+
+Further validate by checking the `sessionInfo()` outputs.
+
+```{r}
+sessionInfo()
+
+"xwas" %in% loadedNamespaces()
+```
+
+## 2. Package Survey
+
+Fully documented library and functions.
+
+```{r}
+help(xwas)
+```
+
+Load included NHANES datasets for downstream analyses.
+
+```{r}
+data(nhanes)
+```
+
+## 3. Do Analysis
+
+```{r}
+xlm(data=nhanes, depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "RIDAGEYR"), permute=10)
+```
+
+Future speed ups.
+
+```{r}
+#system.time(xwas(data=nhanes, depvar="LBXGLU", permute=10, n=1))
+#system.time(xwas(data=nhanes, depvar="LBXGLU", permute=10, n=4))
+```
