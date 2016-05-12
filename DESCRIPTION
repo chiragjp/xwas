@@ -1,0 +1,16 @@
+Package: xwas
+Title: X-Wide Association Analyses
+Version: 0.1
+Author:	Chirag J Patel <chirag@hms.harvard.edu>
+Maintainer: Nam Pho <nam_pho@hms.harvard.edu>
+License: MIT + file LICENSE
+VignetteBuilder: knitr
+Suggests:
+    knitr
+Description: An R package for performing an X-Wide Association Analysis (XWAS).
+    Please see the documentation for more detailed information.
+URL: https://github.com/nampho2/xwas/
+Depends:
+    R (>= 3.2.2)
+LazyData: true
+RoxygenNote: 5.0.1

@@ -1,0 +1,10 @@
+Makefile
+^.*\.Rproj$
+^\.Rproj\.user$
+.Rbuildignore.*
+.gitignore.*
+^\.travis\.yml.*
+..Rcheck
+.git
+.git/objects/
+data-raw/
