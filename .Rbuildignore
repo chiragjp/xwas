@@ -1,4 +1,5 @@
 Makefile
+exposome/*
 ^.*\.Rproj$
 ^\.Rproj\.user$
 .Rbuildignore.*
