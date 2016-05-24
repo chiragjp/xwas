@@ -14,3 +14,7 @@ COPY config /home/rstudio/
 RUN mkdir /home/rstudio/.R_libs
 RUN R -e 'install.packages("devtools")'
 RUN R -e 'devtools::install_github("nampho2/xwas")'
+
+USER root
+
+#CMD exec /usr/lib/rstudio-server/bin/rserver --server-daemonize 0
