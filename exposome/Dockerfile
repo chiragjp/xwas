@@ -1,4 +1,4 @@
-## dbmi/exposome-xwas
+## nampho2/xwas or dbmi/exposome-xwas 
 
 FROM nampho2/rstudio-server:latest
 
