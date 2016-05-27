@@ -24,14 +24,14 @@
 #'
 #' @export
 manhattan <- function(data, qthreshold=0.05, nlabels=6, ...) {
-    data.log <- -log(data)
+    data.log <- -log(data, base=10)
 
     top <- sort(data.log, decreasing=TRUE)
     top <- top[is.finite(top)]
 
     i <- match(names(head(top, n=nlabels)), names(data.log))
 
-    plot(data.log, ylab="-log(p-value)", xlim=c(0, length(data)*1.25), frame.plot=FALSE, ...)
-    abline(h=-log(qthreshold), col="red")
+    plot(data.log, ylab="-log10(p-value)", xlim=c(0, length(data)*1.25), frame.plot=FALSE, ...)
+    abline(h=-log(qthreshold, base=10), col="red")
     text(i, data.log[i]+20, names(data.log[i]))
 }
