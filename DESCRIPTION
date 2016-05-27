@@ -8,6 +8,9 @@ VignetteBuilder: knitr
 Depends:
     survey,
     survival
+Imports:
+    survey,
+    survival
 Suggests:
     knitr
 Description: An R package for performing an X-Wide Association Analysis (XWAS).
