@@ -5,6 +5,21 @@
 # xwas.R - collection of functions providing the backend for xwas analysis
 #
 
+#' Check if the object is a survey design object from the 'survey' library.
+#'
+#' @param design is an object to test for
+#'
+#' @return A boolean if the design argument provided is a 'survey.design' object or not.
+#'
+#' @export
+is.survey <- function(design) {
+    if("survey.design" %in% class(design)) {
+        return(TRUE)
+    } else {
+        return(FALSE)
+    }
+}
+
 #' Extend the base formula with variables we are adjusting for.
 #'
 #' @param base_formula a formula object with the dependent variable as a function of the independent variable
@@ -408,7 +423,7 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
     space <- space[!space %in% depvar] # remove the outcome from the variable space to control and explore
 
     if (parallel) {
-        if (verbose) print("Doing multi core analysis.")
+        if (verbose) print("Multi-core analysis.")
         library(foreach)
 	library(doParallel)
 
@@ -450,16 +465,18 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
 	if (verbose) print("Terminating cluster.")
     	stopCluster(cl) # return resources if parallel option used
     } else {
-        if (verbose) print("Doing single core analysis.")
+        if (verbose) print("Single-core analysis.")
 	
         #
         # THIS IS THE SINGLE CORE VERSION OF THE MAIN LOOP
         #
     	for (varname in space) {
-    	    if (verbose & is.null(adjvars)) {
-    	        print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
-	    } else {
-    	        print( paste("Adjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
+    	    if (verbose) {
+	        if (is.null(adjvars)) {
+    	            print( paste("Unadjusted testing", varname, "var", which(space == varname), "of", length(space)) ) # DEBUG
+	    	} else {
+    	            print( paste("Adjusted testing", varname, "var", which(space == varname), "of", length(space)) ) # DEBUG
+		}
 	    }
 
 	    if (is.null(adjvars)) { 
