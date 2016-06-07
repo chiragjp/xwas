@@ -229,7 +229,7 @@ analyze_logistic_mod <- function(formula, dat, ...) {
 #'
 #' @export
 analyze_surival_mod <- function(formula, dat, ...) {
-    library(survival) # required to load coxph function
+    #library(survival) # required to load coxph function
     summaryFrame <- NULL
     N <- nrow(dat)
 
@@ -424,8 +424,8 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
 
     if (parallel) {
         if (verbose) print("Multi-core analysis.")
-        library(foreach)
-	library(doParallel)
+        #library(foreach)
+	#library(doParallel)
 
         # start cluster if multicore
 	if (parallel) maxcores <- detectCores()
