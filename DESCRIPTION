@@ -5,18 +5,15 @@ Author:	Chirag J Patel <chirag@hms.harvard.edu>
 Maintainer: Nam Pho <nam_pho@hms.harvard.edu>
 License: MIT + file LICENSE
 VignetteBuilder: knitr
-Depends:
-    survey,
-    survival
-Imports:
-    survey,
-    survival
-Suggests:
-    knitr
 Description: An R package for performing an X-Wide Association Analysis (XWAS).
     Please see the documentation for more detailed information.
 URL: https://github.com/nampho2/xwas/
 Depends:
-    R (>= 3.2.2)
+    R (>= 3.0.0),
+    parallel,    
+    survey,
+    survival
+Suggests:
+    knitr
 LazyData: true
 RoxygenNote: 5.0.1
