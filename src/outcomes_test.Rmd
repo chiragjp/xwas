@@ -1,0 +1,68 @@
+---
+title: "How To Do Survey-Weighted regressions in R and identify variables in the NHANES data"
+author: "Chirag J Patel"
+date: "March 29, 2016"
+output: html_document
+---
+
+Showing how to do XWAS with different types of outcomes to Nam.
+
+```{r}
+load('../data/bigTable_quant_pheno_chron_telo_mort.Rdata')
+```
+
+How do we figure out what is a exposure and what is a phenotype in NHANES?
+Hint: Use the 'varDesc' data.frame:
+```{r}
+head(varDesc) ## this gives the variable name and description and broad category for each variable (called 'var_desc_ewas')
+
+as.data.frame(table(varDesc$var_desc_ewas)) ##  the types of variables
+
+phenotypesEwasDesc <- c('aging', 'biochemistry', 'blood', 'blood pressure', 'body measures', 'cognitive functioning', 'disease', 'hormone', 'physical fitness') # you can use these to look at phenotypes in mortality risk
+
+```
+
+Next, how does survey-weighted regression work?
+Suppose we want to look at the association between fasting glucose and BMI (adjusted by age and sex) in the 2003-2004 survey.
+
+Under a normal study sample, we would simply use lm:
+```{r}
+dat <- subset(mainTab, SDDSRVYR == 3) # subset for 2003-2004
+mod <- lm(LBXGLU ~ BMXBMI + RIDAGEYR + female, dat)
+summary(mod)
+```
+
+But with NHANES, this is technically not correct. We need to use survey-weighting to accomodate the survey sampling of the data:
+```{r}
+library(survey)
+dsn <- svydesign(id=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T,data=subset(dat, WTMEC2YR > 0)) # first cret a survey design object, specififying the sampling units (SDMVPSU), the strata (SDMVSTRA), and probability weight of being selected WTMEC2YR
+mod.svy <- svyglm(LBXGLU  ~ BMXBMI + RIDAGEYR + female, design=dsn) ## now use SVYGLM; 
+summary(mod.svy)  #slightly different estimates
+```
+
+Lets try logistic regression, looking at the clinical diagnosis of diabetes (LBXGLU >= 126) using logistic regression:
+```{r}
+mod.svy.t2d <- svyglm(I(LBXGLU >=125)  ~ BMXBMI + RIDAGEYR + female, design=dsn, family=quasibinomial()) #depending on the family= parameter, you can use this for logistic regression, as well.
+summary(mod.svy.t2d) #t2d increases by 10% per 1 unit increase in BMI.
+```
+
+What about survival analysis? Different beast! In survival analyses, we require whther the person died at the time of querying survival (0 or 1), and time to querying (e.g., 1 month, 5 months, etc)
+These are coded as MORTSTAT and PERMTH_EXM in NHANES respectively.
+
+So, for glucose increase, what is the hazard of death adjusting for age and sex for participants surveyed in 1999-2000?
+```{r}
+library(survival)
+suvdat <- subset(mainTab, !is.na(MORTSTAT) & !is.na(PERMTH_EXM) & SDDSRVYR == 1)
+mod.cox <- coxph(Surv(PERMTH_EXM, MORTSTAT) ~ RIDAGEYR + female + LBXGLU, data=suvdat)
+summary(mod.cox) # higher glucose signficantly associated with risk for death.
+```
+
+But remember, we need to use a survey-weighted analysis for NHANES:
+```{r}
+dsn <- svydesign(id=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T,data=subset(suvdat, WTMEC2YR > 0)) 
+mod.cox.svy <- svycoxph(Surv(PERMTH_EXM, MORTSTAT) ~ RIDAGEYR + female + LBXGLU, dsn)
+summary(mod.cox.svy)
+```
+
+
+
