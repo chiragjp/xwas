@@ -7,7 +7,7 @@ build:
 	R CMD build --no-build-vignettes --no-manual --no-resave-data .
 
 check:
-	R CMD check --no-build-vignettes --no-manual --timings --as-cran .
+	R CMD check --no-build-vignettes --no-manual --timings --as-cran xwas_*.tar.gz
 
 clean:
 	rm -fr ~/.R_libs/xwas
