@@ -1,8 +1,9 @@
-..Rcheck
+*~
+.*~
 .Rproj
 .Rhistory
 .RData
-.*~
-*~
+..Rcheck
+xwas.Rcheck
 xwas_*.tar.gz
-\#*
+tmp
