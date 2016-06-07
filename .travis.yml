@@ -1,6 +1,7 @@
 language: r
+cache: packages
 
-sudo: required
+sudo: false
 
 notifications:
   email:
