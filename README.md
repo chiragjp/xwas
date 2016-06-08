@@ -4,7 +4,7 @@
 
 X-Wide Association Analysis (XWAS) is an R-package.
 
-TODO
+##### TODO
 - sample data files: HIV and NHANES
 - add introspection to detect data types?
 - script to collect results — use https://github.com/dgrtwo/broom
@@ -15,17 +15,25 @@ TODO
 - get to work with HIV dataset
 - repeated measures
 
-DEVELOPERS
+##### End-users
+Currently install directly from the Github repository using `devtools`, future support for CRAN installation forthcoming.
 
 ```
-# make edits and test the build locally
-xwas$ make
+# install directly from Github
+> library(devtools)
+> devtools::install_github("nampho2/xwas")
+Downloading GitHub repo nampho2/xwas@master
+```   
 
-# install and run
-xwas$ make install
-xwas$ R
+##### Developers
+Make sure to set `R_LIBS="~/.R_libs"` within a `.Renviron` file within your home directory. Also make sure the `~/.R_libs` folder exists to house personal packages distinct from the system set of R libraries.
+
+```
+# build, check, and install
+xwas$ make deploy
 
 # test the code
+xwas$ R
 > library(xwas)
 >
 
@@ -35,7 +43,7 @@ xwas$ git commit -m "description of changes"
 xwas$ git push
 ```
 
-REFERENCES
+##### References
 - Karl Broman "Getting your R package on CRAN" [<a href="http://kbroman.org/pkg_primer/pages/cran.html">web</a>]
 - Karl Broman "Writing R packages: Tools for Reproducible Research" [<a href="http://kbroman.org/Tools4RR/assets/lectures/08_rpack_withnotes.pdf">pdf</a>]
 - R Admin Pages "CRAN" [<a href="https://cran.r-project.org/doc/manuals/r-release/R-admin.html">web</a>]
