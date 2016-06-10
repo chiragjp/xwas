@@ -60,9 +60,9 @@ xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female")
 Perform across all variables, not just BMI while still adjusting for age and sex in each instance. Adjust all the p-values to account for FDR then plot all co-variates.
 
 ```{r}
-glucose.all <- xwas(data=nhanes, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"))
+glucose.all <- xwas(data=dat, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"))
 
-glucose.all.adjust <- p.adjust(lapply(glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+glucose.all.adjust <- p.adjust(unlist(lapply(glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} )))
 
 manhattan(glucose.all.adjust, nlabels=3)
 ```
@@ -95,7 +95,7 @@ xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female")
 ```{r}
 svy.glucose.all <- xwas(data=dat, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"), design=dsn)
 
-svy.glucose.all.adjust <- p.adjust(lapply(svy.glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+svy.glucose.all.adjust <- p.adjust(unlist(lapply(svy.glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} )))
 
 manhattan(svy.glucose.all.adjust, nlabels=3)
 ```
@@ -108,6 +108,15 @@ svy.glucose.all.sig <- subset(svy.glucose.all.adjust, glucose.all.adjust < 0.05)
 par(mfrow=c(1,2))
 manhattan(svy.glucose.all.adjust, nlabels=3, main="Svy Glucose vs BMI (All)")
 manhattan(svy.glucose.all.sig, nlabels=3, main="Svy Glucose vs BMI (Sig-only)")
+par(mfrow=c(1,1))
+```
+
+Side-by-side comparison of non-survey and survey analysis for glucose vs BMI.
+
+```{r}
+par(mfrow=c(1,2))
+manhattan(glucose.all.sig, nlabels=3, main="Non-svy Glucose vs BMI")
+manhattan(svy.glucose.all.sig, nlabels=3, main="Svy Glucose vs BMI")
 par(mfrow=c(1,1))
 ```
 
