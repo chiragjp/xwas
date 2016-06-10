@@ -424,7 +424,7 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, perm
     if (length(invalid)) {
         warning(paste("the following column names are invalid:", invalid, "! Dropping them from data.frame and continuing analysis."))
 
-	space <- space[, -which(names(space) %in% invalid)] # just drop invalid column names, e.g. numerics pretending to be strings
+	space <- space[, -which(colnames(space) %in% invalid)] # just drop invalid column names, e.g. numerics pretending to be strings
     }
 
     if (length(varname)) {
