@@ -127,25 +127,37 @@ $(document).ready(function () {
 ## [2] &quot;/Library/Frameworks/R.framework/Versions/3.2/Resources/library&quot;</code></pre>
 <p>Now you can load the <code>xwas</code> package and are good to go if no errors.</p>
 <pre class="r"><code>library(xwas)</code></pre>
+<pre><code>## Loading required package: parallel</code></pre>
+<pre><code>## Loading required package: survey</code></pre>
+<pre><code>## Loading required package: grid</code></pre>
+<pre><code>## 
+## Attaching package: 'survey'</code></pre>
+<pre><code>## The following object is masked from 'package:graphics':
+## 
+##     dotchart</code></pre>
+<pre><code>## Loading required package: survival</code></pre>
+<pre><code>## Warning: package 'survival' was built under R version 3.2.5</code></pre>
 <p>Further validate by checking the <code>sessionInfo()</code> outputs.</p>
 <pre class="r"><code>sessionInfo()</code></pre>
 <pre><code>## R version 3.2.2 (2015-08-14)
 ## Platform: x86_64-apple-darwin13.4.0 (64-bit)
-## Running under: OS X 10.11.4 (El Capitan)
+## Running under: OS X 10.11.5 (El Capitan)
 ## 
 ## locale:
 ## [1] en_US.UTF-8/en_US.UTF-8/en_US.UTF-8/C/en_US.UTF-8/en_US.UTF-8
 ## 
 ## attached base packages:
-## [1] stats     graphics  grDevices utils     datasets  methods   base     
+## [1] grid      parallel  stats     graphics  grDevices utils     datasets 
+## [8] methods   base     
 ## 
 ## other attached packages:
-## [1] xwas_0.1
+## [1] xwas_0.1        survival_2.39-4 survey_3.30-3  
 ## 
 ## loaded via a namespace (and not attached):
-##  [1] magrittr_1.5    formatR_1.2.1   tools_3.2.2     htmltools_0.3.5
-##  [5] yaml_2.1.13     Rcpp_0.12.1     stringi_1.0-1   rmarkdown_0.9.6
-##  [9] knitr_1.12      stringr_1.0.0   digest_0.6.8    evaluate_0.8</code></pre>
+##  [1] Rcpp_0.12.5     lattice_0.20-33 digest_0.6.9    formatR_1.4    
+##  [5] magrittr_1.5    evaluate_0.9    stringi_1.1.1   Matrix_1.2-6   
+##  [9] rmarkdown_0.9.6 splines_3.2.2   tools_3.2.2     stringr_1.0.0  
+## [13] yaml_2.1.13     htmltools_0.3.5 knitr_1.13</code></pre>
 <pre class="r"><code>&quot;xwas&quot; %in% loadedNamespaces()</code></pre>
 <pre><code>## [1] TRUE</code></pre>
 </div>
@@ -160,12 +172,12 @@ $(document).ready(function () {
 <h2>3. Do Analysis</h2>
 <pre class="r"><code>xlm(data=nhanes, depvar=&quot;LBXGLU&quot;, varname=&quot;LBXGTC&quot;, adjvars=c(&quot;female&quot;, &quot;RIDAGEYR&quot;), permute=10)</code></pre>
 <pre><code>## I(scale(LBXGLU)) ~ I(scale(LBXGTC)) + female + RIDAGEYR
-## &lt;environment: 0x7ff2014ed470&gt;</code></pre>
-<pre><code>##                       Estimate   Std. Error    t value  Pr(&gt;|t|)    N
-## (Intercept)      -0.0049015230 0.0394337263 -0.1243052 0.7784322 3115
-## I(scale(LBXGTC))  0.0042027982 0.0179367138  0.2343339 0.5887723 3115
-## female           -0.0084006030 0.0358887382 -0.2341161 0.5111041 3115
-## RIDAGEYR          0.0002306142 0.0007828352  0.2946227 0.6295894 3115
+## &lt;environment: 0x7fb81ae885f0&gt;</code></pre>
+<pre><code>##                       Estimate  Std. Error     t value  Pr(&gt;|t|)    N
+## (Intercept)      -0.0167089343 0.039427317 -0.42391691 0.5686441 3115
+## I(scale(LBXGTC))  0.0016205216 0.017933798  0.09037762 0.6078453 3115
+## female            0.0114549737 0.035882905  0.31936921 0.3875392 3115
+## RIDAGEYR          0.0002786778 0.000782708  0.35612462 0.5100793 3115
 ##                  varname permute
 ## (Intercept)       LBXGTC      10
 ## I(scale(LBXGTC))  LBXGTC      10

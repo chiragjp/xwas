@@ -23,12 +23,14 @@ Now you can load the `xwas` package and are good to go if no errors.
 library(xwas)
 ```
 
-Further validate by checking the `sessionInfo()` outputs.
+Further validate by checking the `sessionInfo()` or `search()` outputs.
 
 ```{r}
 sessionInfo()
 
 "xwas" %in% loadedNamespaces()
+
+search()
 ```
 
 ## 2. Package Survey
@@ -43,12 +45,70 @@ Load included NHANES datasets for downstream analyses.
 
 ```{r}
 data(nhanes)
+
+dat <- subset(MainTable, SDDSRVYR == 3) # subset for 2003-2004
 ```
 
-## 3. Do Analysis
+## 3. Perform General Analysis
+
+Perform a singular linear association study, looking at how blood glucose (`LBXGLU`) varies as a result of BMI (`BMXBMI`) while adjusting for age (`RIDAGEYR`) and sex (`female`).
 
 ```{r}
-xlm(data=nhanes, depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "RIDAGEYR"), permute=10)
+xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"))
+```
+
+Perform across all variables, not just BMI while still adjusting for age and sex in each instance. Adjust all the p-values to account for FDR then plot all co-variates.
+
+```{r}
+glucose.all <- xwas(data=nhanes, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"))
+
+glucose.all.adjust <- p.adjust(lapply(glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+
+manhattan(glucose.all.adjust, nlabels=3)
+```
+
+Plot just the significant co-variates of glucose under the threshold of significance. We will plot both the graphs side-by-side for easier comparison.
+
+```{r}
+glucose.all.sig <- subset(glucose.all.adjust, glucose.all.adjust < 0.05)
+
+par(mfrow=c(1,2))
+manhattan(glucose.all.adjust, nlabels=3, main="Glucose vs BMI (All)")
+manhattan(glucose.all.sig, nlabels=3, main="Glucose vs BMI (Sig-only)")
+par(mfrow=c(1,1))
+```
+
+## 3. Perform Survey-weighted Analysis
+
+Replicate the study using survey-weighted analysis built on the `survey` package. First requires the definition of a survey design using the `survey::svdesign` object. From here on out you can use the exact same function calls you used previously with the added input argument in the function of `design`.
+
+```{r}
+dsn <- svydesign(id=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T, data=subset(MainTable, WTMEC2YR > 0))
+```
+
+Perform a survey-weighted regression analysis of glucose as a function of BMI while adjusting for age and sex.
+
+```{r}
+xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"), design=dsn)
+```
+
+```{r}
+svy.glucose.all <- xwas(data=dat, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"), design=dsn)
+
+svy.glucose.all.adjust <- p.adjust(lapply(svy.glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+
+manhattan(svy.glucose.all.adjust, nlabels=3)
+```
+
+Plot just the significant co-variates of glucose under the threshold of significance.
+
+```{r}
+svy.glucose.all.sig <- subset(svy.glucose.all.adjust, glucose.all.adjust < 0.05)
+
+par(mfrow=c(1,2))
+manhattan(svy.glucose.all.adjust, nlabels=3, main="Svy Glucose vs BMI (All)")
+manhattan(svy.glucose.all.sig, nlabels=3, main="Svy Glucose vs BMI (Sig-only)")
+par(mfrow=c(1,1))
 ```
 
 Future speed ups.

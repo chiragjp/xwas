@@ -20,6 +20,30 @@ is.survey <- function(design) {
     }
 }
 
+#' Given a survey::svydesign object, verify it is real and then process explicit warnings if verbose output is requested.
+#'
+#' @param design is the survey::svydesign object to verify usage for.
+#' @param verbose is a boolean defaulting to TRUE that outputs the warnings.
+#'
+#' @return A boolean to secondarily verify a survey::svydesign object to is.survey output.
+#'
+#' export
+verify.survey <- function(design, verbose=TRUE) {
+    if (!is.null(design)) {
+        if (is.survey(design)) {
+            if (verbose) warning("using survey-based regression.")
+
+	    return(TRUE)
+        } else {
+	    if (verbose) warning("provided survey design is invalid object, ignoring.")
+        }
+    } else {
+        if (verbose) warning("no survey-design object provided.")
+    }
+
+    return(FALSE)
+}
+
 #' Extend the base formula with variables we are adjusting for.
 #'
 #' @param base_formula a formula object with the dependent variable as a function of the independent variable
@@ -253,15 +277,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
         stop("non-negative value required for permute.")
     }
 
-    if (!is.null(design)) {
-        if (is.survey(design)) {
-            if (verbose) warning("using survey-based regression.")
-        } else {
-	    if (verbose) warning("provided survey design is invalid object, ignoring.")
-        }
-    } else {
-        if (verbose) warning("no survey-design object provided.")
-    }
+    verify.survey(design, verbose) # parses warnings on survey::svydesign usage
     
     intVar <- NULL # fix in the future, currently this is just a new name for adjvars
     
@@ -312,10 +328,10 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 	    #summaryFrame <- rbind(summaryFrame, frm)
 
 	    # going with lists!
-	    summaryFrameRaw[[i]] <- linear_mod(doForm, dat)
+	    summaryFrameRaw[[i]] <- linear_mod(doForm, dat, design=design)
 	}
     } else {
-        summaryFrame <- linear_mod(doForm, dat)
+        summaryFrame <- linear_mod(doForm, dat, design=design)
     }
 
     # process permutation analysis into a singular data.frame
@@ -348,6 +364,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 #' @param depvar is required and the outcome or dependent variable we are looking to analyze in the context of multiple factors.
 #' @param varname is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.
 #' @param adjvars is optional and is a vector of a set of variables to adjust for under every condition, if not specified we will scan all variables without adjusting on a first pass.
+#' @param design a survey::svydesign object that has the experimental design.
 #' @param permute is the number of times to bootstrap each variable analysis in the xwas.
 #' @param n is the number of cores to use for the multi-core implementation, value must be > 1 or set to "MAX".
 #' @param verbose is a boolean to print extra information.
@@ -362,7 +379,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 #' }
 #'
 #' @export
-xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, n=1, verbose=TRUE) {
+xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, n=1, verbose=TRUE) {
     # require a non-negative set of permutations
     if (permute < 0) {
         stop("non-negative value required for permute.")
@@ -370,13 +387,15 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, n=1, v
 
     # need an outcome to test for
     if (is.null(depvar) | nchar(depvar) < 1) {
-        stop("need to specify a valid outcome/independent variable.")
+        stop("can only have 1 or 0/NULL depvar, dependent variables.")
     }
 
     # should only have 1 (if any) dependent variable
     if (length(depvar) > 1) {
-       stop("can only have 1 or 0/NULL depvar, dependent variables.")
+        stop("need to specify a valid outcome/independent variable.")    
     }
+
+    verify.survey(design, verbose) # parses warnings on survey::svydesign usage
 
     test <- list()
     space <- NULL
@@ -403,7 +422,9 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, n=1, v
     invalid <- space[!is.na(suppressWarnings( as.numeric(space) ))]
 
     if (length(invalid)) {
-        stop(paste("the following column names are invalid:", invalid, "!"))
+        warning(paste("the following column names are invalid:", invalid, "! Dropping them from data.frame and continuing analysis."))
+
+	space <- space[, -which(names(space) %in% invalid)] # just drop invalid column names, e.g. numerics pretending to be strings
     }
 
     if (length(varname)) {
@@ -473,7 +494,7 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, n=1, v
 		}
 	    }
 
-	    test[[testvar]] <- xlm(data=data, depvar=depvar, varname=testvar, adjvars=adjvars, permute=permute, verbose=verbose)
+	    test[[testvar]] <- xlm(data=data, depvar=depvar, varname=testvar, adjvars=adjvars, design=design, permute=permute, verbose=verbose)
         }
     }
 

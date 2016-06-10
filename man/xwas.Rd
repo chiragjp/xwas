@@ -4,8 +4,8 @@
 \alias{xwas}
 \title{xwas}
 \usage{
-xwas(data, depvar = NULL, varname = NULL, adjvars = c(), permute = 0,
-  n = 1, verbose = TRUE)
+xwas(data, depvar = NULL, varname = NULL, adjvars = c(), design = NULL,
+  permute = 0, n = 1, verbose = TRUE)
 }
 \arguments{
 \item{data}{is the data.frame containing what to analyze.}
@@ -15,6 +15,8 @@ xwas(data, depvar = NULL, varname = NULL, adjvars = c(), permute = 0,
 \item{varname}{is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.}
 
 \item{adjvars}{is optional and is a vector of a set of variables to adjust for under every condition, if not specified we will scan all variables without adjusting on a first pass.}
+
+\item{design}{a survey::svydesign object that has the experimental design.}
 
 \item{permute}{is the number of times to bootstrap each variable analysis in the xwas.}
 
