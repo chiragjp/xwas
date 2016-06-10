@@ -4,8 +4,8 @@
 \alias{xlm}
 \title{xlm}
 \usage{
-xlm(data, depvar = NULL, varname = NULL, adjvars = c(), permute = 0,
-  categorical = 0, verbose = TRUE)
+xlm(data, depvar = NULL, varname = NULL, adjvars = c(), design = NULL,
+  permute = 0, categorical = 0, verbose = TRUE)
 }
 \arguments{
 \item{data}{is a data.frame containing the data to perform analysis on.}
@@ -15,6 +15,8 @@ xlm(data, depvar = NULL, varname = NULL, adjvars = c(), permute = 0,
 \item{varname}{a character vector with a column name for the independent variable.}
 
 \item{adjvars}{a list of variables to adjust for in the regression.}
+
+\item{design}{is an optional survey::svydesign object for weighted analysis.}
 
 \item{permute}{is an optional parameter of how many permutations to perform in the bootstrap.}
 
@@ -32,7 +34,7 @@ and other permutation details. It does a lot of blind analysis and requires the 
 \examples{
 \dontrun{
 xlm()
-xlm(data=nhanes, depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "RIDAGEYR"), permute=10)
+xlm(data=nhanes, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"))
 }
 
 }

@@ -4,15 +4,17 @@
 \alias{xwas}
 \title{xwas}
 \usage{
-xwas(data, depvar = NULL, adjvars = NULL, permute = 0, n = 1,
-  verbose = TRUE)
+xwas(data, depvar = NULL, varname = NULL, adjvars = c(), permute = 0,
+  n = 1, verbose = TRUE)
 }
 \arguments{
 \item{data}{is the data.frame containing what to analyze.}
 
-\item{depvar}{is the outcome of the study we are looking to analyze in the context of multiple factors.}
+\item{depvar}{is required and the outcome or dependent variable we are looking to analyze in the context of multiple factors.}
 
-\item{adjvars}{is a vector of variables to adjust for, if not specified we will scan all variables without adjusting on a first pass.}
+\item{varname}{is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.}
+
+\item{adjvars}{is optional and is a vector of a set of variables to adjust for under every condition, if not specified we will scan all variables without adjusting on a first pass.}
 
 \item{permute}{is the number of times to bootstrap each variable analysis in the xwas.}
 
@@ -30,7 +32,8 @@ including logic to determine variable characteristics.
 \examples{
 \dontrun{
 xwas()
-xwas(data=nhanes, depvar="LBXGLU", permute=10)
+xwas(data=nhanes, depvar="LBXGLU")
+xwas(data=nhanes, depvar="LBXGLU", adjvars=c("BMXBMI", "RIDAGEYR", "female"))
 }
 
 }

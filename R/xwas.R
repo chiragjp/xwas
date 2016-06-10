@@ -103,74 +103,37 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
     return(data.frame(qvalue=qv, pvalue=pvals))
 }
 
+#' linear_mod
+#' 
 #' Main worker function to perform linear associations.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on.
-#' 
+#' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
+#' @param design a survey::svydesign object that has the experimental design.
+#'
 #' @return A data.frame representing the linear association study.
 #'
 #' @examples
 #' \dontrun{
 #' linear_mod()
 #' }
-linear_mod <- function(formula, dat, ...) {
-    mod <- NULL
-    
-    mod <- tryCatch(lm(formula, dat, ...), error = function(e) {
-	       print(e)
-	       return(NULL);
-	   })
-	
-    return(mod)
-}
-
-#' Main worker function to perform binary outcome associations.
-#'
-#' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on.
-#'
-#' @return A data.frame representing the binary outcome study.
-#'
-#' @examples
-#' \dontrun{
-#' logistic_mod()
-#' }
-logistic_mod <- function(formula, dat, ...) {
-    mod <- NULL
-	
-    mod <- tryCatch(glm(formula, dat, family=binomial(), ...), error = function(e) {
-	       print(e)
-	       return(NULL);
-	   })
-	
-    return(mod)
-}
-
-#' analyze_linear_mod
-#' 
-#' Main worker function to perform linear associations.
-#'
-#' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on.
-#'
-#' @return A data.frame representing the linear association study.
-#'
-#' @examples
-#' \dontrun{
-#' analyze_linear_mod()
-#' }
 #'
 #' @export
-analyze_linear_mod <- function(formula, dat, ...) {
+linear_mod <- function(formula, dat, design=NULL, ...) {
     summaryFrame <- NULL
     N <- nrow(dat)
-    
-    #mod <- linear_mod(formula, dat, ...)
-    mod <- tryCatch(lm(formula, dat, ...), error = function(e) {
-               print(e)
-	       return(NULL);
-	   })
+
+    if(is.null(design)) {
+        mod <- tryCatch(lm(formula, dat, ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })
+    } else {
+        mod <- tryCatch(survey::svyglm(formula, design=design, ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })        
+    }
     
     if(!is.null(mod)) {
         summaryFrame <- as.data.frame(coef(summary(mod)))
@@ -180,31 +143,38 @@ analyze_linear_mod <- function(formula, dat, ...) {
     return(summaryFrame)
 }
 
-#' analyze_logistic_mod
+#' logistic_mod
 #'
 #' Main worker function to perform binary outcome associations.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on.
+#' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
+#' @param design a survey::svydesign object that has the experimental design.
 #'
 #' @return A data.frame representing the binary outcome study.
 #'
 #' @examples
 #' \dontrun{
-#' analyze_logistic_mod()
+#' logistic_mod()
 #' }
 #' 
 #' @export
-analyze_logistic_mod <- function(formula, dat, ...) {
+logistic_mod <- function(formula, dat, design=NULL, ...) {
     summaryFrame <- NULL
     N <- nrow(dat)
 
-    #mod <- logistic_mod(formula, dat, ...)
-    mod <- tryCatch(glm(formula, dat, family=binomial(), ...), error = function(e) {
-               print(e)
-	       return(NULL);
-	   })
-    
+    if(is.null(design)) {
+        mod <- tryCatch(glm(formula, dat, family=binomial(), ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })
+    } else {
+        mod <- tryCatch(survey::svyglm(formula, design=design, family=binomial(), ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })        
+    }
+
     if (!is.null(mod)) {
 	summaryFrame <- as.data.frame(coef(summary(mod)))
 	summaryFrame$N <- N
@@ -213,39 +183,44 @@ analyze_logistic_mod <- function(formula, dat, ...) {
     return(summaryFrame)
 }
 
-#' analyze_survival_mod
+#' survival_mod
 #'
-#' Main worker function to perform survival analysis. This functionality is still in BETA TESTING.
+#' Main worker function to perform survival analysis.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on.
+#' @param dat the data.frame to perform analysis on, can be option if design argument is used.
+#' @param design a survey::svydesign object that has the experimental design.
 #'
 #' @return A data.frame representing the survival outcome study.
 #'
 #' @examples
 #' \dontrun{
-#' analyze_survival_mod()
+#' survival_mod()
 #' }
 #'
 #' @export
-analyze_surival_mod <- function(formula, dat, ...) {
-    #library(survival) # required to load coxph function
+surival_mod <- function(formula, dat, design=NULL, ...) {
     summaryFrame <- NULL
     N <- nrow(dat)
 
-    # need to refactor formula object with survival object and TEST function
     # e.g., coxph(Surv(PERMTH_EXM, MORTSTAT) ~ RIDAGEYR + female + LBXGLU, data=suvdat)
-    # see ?Surv
-    mod <- tryCatch(coxph(formula, dat, ...), error = function(e) {
-	       print(e)
-	       return(N);
-	   })
+    if(is.null(design)) {
+        mod <- tryCatch(survival::coxph(formula, dat, ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })
+    } else {
+        mod <- tryCatch(survey::svycoxph(formula, design=design, ...), error = function(e) {
+                   print(e)
+	           return(NULL);
+	       })        
+    }
 
-    # not sure if this is necessary
-    #if (!is.null(mod)) {
-    #    summaryFrame <- as.data.frame(coef(summary(mod)))
-    #	summaryFrame$N <- N
-    #}
+
+    if (!is.null(mod)) {
+        summaryFrame <- as.data.frame(coef(summary(mod)))
+    	summaryFrame$N <- N
+    }
 
     return(summaryFrame)
 }    
@@ -259,6 +234,7 @@ analyze_surival_mod <- function(formula, dat, ...) {
 #' @param depvar a character vector with a column name for the dependent variable.
 #' @param varname a character vector with a column name for the independent variable.
 #' @param adjvars a list of variables to adjust for in the regression.
+#' @param design is an optional survey::svydesign object for weighted analysis.
 #' @param permute is an optional parameter of how many permutations to perform in the bootstrap.
 #' @param categorical is a binary option representing whether or not the variable is categorical.
 #' @param verbose is a boolean that determines if we print extra information. Not recommend for an XWAS, only one off analyses.
@@ -268,24 +244,33 @@ analyze_surival_mod <- function(formula, dat, ...) {
 #' @examples
 #' \dontrun{
 #' xlm()
-#' xlm(data=nhanes, depvar="LBXGLU", varname="LBXGTC", adjvars=c("female", "RIDAGEYR"), permute=10)
+#' xlm(data=nhanes, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"))
 #' }
 #' 
 #' @export
-xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categorical=0, verbose=TRUE) {
+xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, categorical=0, verbose=TRUE) {
     if (permute < 0) {
         stop("non-negative value required for permute.")
     }
+
+    if (!is.null(design)) {
+        if (is.survey(design)) {
+            if (verbose) warning("using survey-based regression.")
+        } else {
+	    if (verbose) warning("provided survey design is invalid object, ignoring.")
+        }
+    } else {
+        if (verbose) warning("no survey-design object provided.")
+    }
     
-    intVar <- NULL
+    intVar <- NULL # fix in the future, currently this is just a new name for adjvars
     
-    keepVars <- c(depvar, varname, adjvars)
+    keepVars <- c(depvar, varname, adjvars) # reduce data.frame space to data we want to study
     dat <- data[complete.cases(data[, keepVars]), keepVars]
 
     if (nrow(dat) < 1) {
-        if(verbose) {
-            warning("insufficient number of cases.")
-	}
+        if (verbose) warning("insufficient number of cases.")
+	
         return(NULL)
     }
     
@@ -307,9 +292,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
     }
     
     doForm <- addToBase(baseform, adjvars)
-    if (verbose) {
-       print(doForm)
-    }
+    if (verbose) print(doForm)
     
     summaryFrame <- c()
     summaryFrameRaw <- list()
@@ -324,15 +307,15 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 	    dat[, depvar] <- sample(responses)
 
 	    # legacy character vector implementation
-	    #frm <- analyze_linear_mod(doForm, dat)
+	    #frm <- linear_mod(doForm, dat)
 	    #frm$permute_index <- i
 	    #summaryFrame <- rbind(summaryFrame, frm)
 
 	    # going with lists!
-	    summaryFrameRaw[[i]] <- analyze_linear_mod(doForm, dat)
+	    summaryFrameRaw[[i]] <- linear_mod(doForm, dat)
 	}
     } else {
-        summaryFrame <- analyze_linear_mod(doForm, dat)
+        summaryFrame <- linear_mod(doForm, dat)
     }
 
     # process permutation analysis into a singular data.frame
@@ -362,8 +345,9 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #' including logic to determine variable characteristics. 
 #'
 #' @param data is the data.frame containing what to analyze.
-#' @param depvar is the outcome of the study we are looking to analyze in the context of multiple factors.
-#' @param adjvars is a vector of variables to adjust for, if not specified we will scan all variables without adjusting on a first pass.
+#' @param depvar is required and the outcome or dependent variable we are looking to analyze in the context of multiple factors.
+#' @param varname is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.
+#' @param adjvars is optional and is a vector of a set of variables to adjust for under every condition, if not specified we will scan all variables without adjusting on a first pass.
 #' @param permute is the number of times to bootstrap each variable analysis in the xwas.
 #' @param n is the number of cores to use for the multi-core implementation, value must be > 1 or set to "MAX".
 #' @param verbose is a boolean to print extra information.
@@ -373,11 +357,12 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, categor
 #' @examples
 #' \dontrun{
 #' xwas()
-#' xwas(data=nhanes, depvar="LBXGLU", permute=10)
+#' xwas(data=nhanes, depvar="LBXGLU")
+#' xwas(data=nhanes, depvar="LBXGLU", adjvars=c("BMXBMI", "RIDAGEYR", "female"))
 #' }
 #'
 #' @export
-xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) {
+xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), permute=0, n=1, verbose=TRUE) {
     # require a non-negative set of permutations
     if (permute < 0) {
         stop("non-negative value required for permute.")
@@ -385,7 +370,12 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
 
     # need an outcome to test for
     if (is.null(depvar) | nchar(depvar) < 1) {
-        stop("need to specify a valid outcome variable.")
+        stop("need to specify a valid outcome/independent variable.")
+    }
+
+    # should only have 1 (if any) dependent variable
+    if (length(depvar) > 1) {
+       stop("can only have 1 or 0/NULL depvar, dependent variables.")
     }
 
     test <- list()
@@ -405,11 +395,7 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
         parallel <- FALSE
     }
 
-    if (is.null(adjvars)) {
-        space <- colnames(data) # all variable space to loop through
-    } else {
-        space <- adjvars # if we know what to adjust for then use that list instead of the entire space
-    }
+    space <- colnames(data)
 
     # R formulas throw errors on invalid factors, e.g. numerics
     # test the entire name space for validity
@@ -419,8 +405,15 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
     if (length(invalid)) {
         stop(paste("the following column names are invalid:", invalid, "!"))
     }
-    
-    space <- space[!space %in% depvar] # remove the outcome from the variable space to control and explore
+
+    if (length(varname)) {
+        # if we know the dependent variable we're only going to do 1 test
+        space <- varname 
+    } else {
+        # if we don't know/specify a dependent variable we search the entire space
+        space <- space[!space %in% depvar]  # remove the outcome from the variable space
+        space <- space[!space %in% adjvars] # remove the adjustment variables from the variable space
+    }
 
     if (parallel) {
         if (verbose) print("Multi-core analysis.")
@@ -447,7 +440,7 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
     	#
     	# THIS IS THE MULTI CORE VERSION OF THE MAIN LOOP
     	#
-    	tmp <- foreach (varname = space, .export=c("test", "xlm", "addToBase", "linear_mod", "analyze_linear_mod")) %dopar% {
+    	tmp <- foreach (varname = space, .export=c("test", "xlm", "addToBase", "linear_mod")) %dopar% {
     	    if (verbose & is.null(adjvars)) {
     	        print( paste("Unadjusted testing", varname, which(space == varname), "of", length(space)) ) # DEBUG
 	    } else {
@@ -470,21 +463,17 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
         #
         # THIS IS THE SINGLE CORE VERSION OF THE MAIN LOOP
         #
-    	for (varname in space) {
+
+    	for (testvar in space) {
     	    if (verbose) {
 	        if (is.null(adjvars)) {
-    	            print( paste("Unadjusted testing", varname, "var", which(space == varname), "of", length(space)) ) # DEBUG
+    	            cat( paste("Unadjusted testing for", testvar, "var on", varname, which(space == testvar), "of", length(space), "\n") ) # DEBUG
 	    	} else {
-    	            print( paste("Adjusted testing", varname, "var", which(space == varname), "of", length(space)) ) # DEBUG
+    	            cat( paste("Adjusted testing for", testvar, "var on", varname, which(space == testvar), "of", length(space), "\n") ) # DEBUG
 		}
 	    }
 
-	    if (is.null(adjvars)) { 
-	        test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, permute=permute, verbose=FALSE)
-	    } else {
-	        re.adjvars <- space[!space %in% varname] # adjust for everything except our independent variable of interest (varname)
-    	    	test[[varname]] <- xlm(data=data, depvar=depvar, varname=varname, adjvars=re.adjvars, permute=permute, verbose=FALSE)
-	    }
+	    test[[testvar]] <- xlm(data=data, depvar=depvar, varname=testvar, adjvars=adjvars, permute=permute, verbose=verbose)
         }
     }
 
@@ -492,14 +481,18 @@ xwas <- function(data, depvar=NULL, adjvars=NULL, permute=0, n=1, verbose=TRUE) 
     # END LOOP DIVERGENCE
     #
 
-    if (length(test) & is.null(adjvars)) {
+    if (length(test) & length(adjvars) == 0) {
+        # if we have test results and there was no dependent variable specified
+	# we will re-run the xwas study with additional 
+
         # adjust for p-value to figure out which depvars are significant
 	q <- p.adjust(lapply(test, function(x) {return(x[2,]$"Pr(>|t|)")} ))
 
 	adjvars <- subset(q, q < 0.05)
 
 	# re-run xwas with a limited variable space
-	return(adjvars)
+	#return(adjvars)
+	return(test)
         #test <- xwas(data=data, depvar=depvar, adjvars=names(adjvars), permute=permute, verbose=verbose)
     }
 

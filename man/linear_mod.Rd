@@ -2,14 +2,16 @@
 % Please edit documentation in R/xwas.R
 \name{linear_mod}
 \alias{linear_mod}
-\title{Main worker function to perform linear associations.}
+\title{linear_mod}
 \usage{
-linear_mod(formula, dat, ...)
+linear_mod(formula, dat, design = NULL, ...)
 }
 \arguments{
 \item{formula}{an R formula class object.}
 
-\item{dat}{the data.frame to perform analysis on.}
+\item{dat}{the data.frame to perform analysis on, can be optional if the design argument is used.}
+
+\item{design}{a survey::svydesign object that has the experimental design.}
 }
 \value{
 A data.frame representing the linear association study.
@@ -21,5 +23,6 @@ Main worker function to perform linear associations.
 \dontrun{
 linear_mod()
 }
+
 }
 
