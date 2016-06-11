@@ -134,6 +134,7 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
 #' @param formula an R formula class object.
 #' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
+#' @param ... are additional arguments passed on to the regression.
 #'
 #' @return A data.frame representing the linear association study.
 #'
@@ -174,6 +175,7 @@ linear_mod <- function(formula, dat, design=NULL, ...) {
 #' @param formula an R formula class object.
 #' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
+#' @param ... are additional arguments passed on to the regression.
 #'
 #' @return A data.frame representing the binary outcome study.
 #'
@@ -214,6 +216,7 @@ logistic_mod <- function(formula, dat, design=NULL, ...) {
 #' @param formula an R formula class object.
 #' @param dat the data.frame to perform analysis on, can be option if design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
+#' @param ... are additional arguments passed on to the regression.
 #'
 #' @return A data.frame representing the survival outcome study.
 #'
@@ -239,7 +242,6 @@ surival_mod <- function(formula, dat, design=NULL, ...) {
 	           return(NULL);
 	       })        
     }
-
 
     if (!is.null(mod)) {
         summaryFrame <- as.data.frame(coef(summary(mod)))
@@ -297,6 +299,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
     if (categorical) {
         baseform <- as.formula(sprintf('I(scale(%s)) ~ %s', depVar.formula, categorize_varname(varname, dat[, varname])))
         nullmod  <- as.formula(sprintf('I(scale(%s)) ~ %s', depVar.formula, categorize_varname(varname, dat[, varname])))
+    #} else if (survival::is.Surv(depvar)) {
     } else { # if (!categorical) {
         baseform <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depVar.formula, varname))
 	nullmod  <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depVar.formula, varname))
@@ -331,7 +334,11 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 	    summaryFrameRaw[[i]] <- linear_mod(doForm, dat, design=design)
 	}
     } else {
-        summaryFrame <- linear_mod(doForm, dat, design=design)
+        if (survival::is.Surv(depvar)) {
+            summaryFrame <- survival_mod(formula=doForm, data=dat, design=design)
+	} else {
+            summaryFrame <- linear_mod(formula=doForm, data=dat, design=design)
+	}
     }
 
     # process permutation analysis into a singular data.frame
