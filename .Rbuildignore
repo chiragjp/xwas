@@ -7,5 +7,6 @@ Makefile.*
 xwas.Rcheck
 ^.*\.Rproj$
 ^\.Rproj\.user$
+src/
 exposome/
 data-raw/
