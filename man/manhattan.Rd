@@ -4,7 +4,8 @@
 \alias{manhattan}
 \title{manhattan}
 \usage{
-manhattan(data, qthreshold = 0.05, nlabels = 6, ...)
+manhattan(data, qthreshold = 0.05, nlabels = 6, ylab = expression(-log[10]
+  * "(p-value)"), frame.plot = FALSE, pch = 20, ...)
 }
 \arguments{
 \item{data}{is the vector containing a list of p-values to display in a manhattan plot.}
@@ -12,9 +13,17 @@ manhattan(data, qthreshold = 0.05, nlabels = 6, ...)
 \item{qthreshold}{is the cutoff of significance (the q-value).}
 
 \item{nlabels}{is the number of top hits to label.}
+
+\item{ylab}{is a default y-axis label passed on to the plot function.}
+
+\item{frame.plot}{is the option passed on to the plot function.}
+
+\item{pch}{is default to 20 setting the point type to a small bullet in the plot function.}
+
+\item{...}{are additional arguments passed onto the plot function.}
 }
 \value{
-A plot object.
+none
 }
 \description{
 Takes a vector of p-values and then displays in a manhattan plot with additional options. Usually can take the output of an xwas result

@@ -4,14 +4,16 @@
 \alias{logistic_mod}
 \title{logistic_mod}
 \usage{
-logistic_mod(formula, dat, design = NULL, ...)
+logistic_mod(formula, data, design = NULL, ...)
 }
 \arguments{
 \item{formula}{an R formula class object.}
 
-\item{dat}{the data.frame to perform analysis on, can be optional if the design argument is used.}
+\item{data}{the data.frame to perform analysis on, can be optional if the design argument is used.}
 
 \item{design}{a survey::svydesign object that has the experimental design.}
+
+\item{...}{are additional arguments passed on to the regression.}
 }
 \value{
 A data.frame representing the binary outcome study.

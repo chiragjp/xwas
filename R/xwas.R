@@ -132,7 +132,7 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
 #' Main worker function to perform linear associations.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
+#' @param data the data.frame to perform analysis on, can be optional if the design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
 #' @param ... are additional arguments passed on to the regression.
 #'
@@ -144,12 +144,12 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
 #' }
 #'
 #' @export
-linear_mod <- function(formula, dat, design=NULL, ...) {
+linear_mod <- function(formula, data, design=NULL, ...) {
     summaryFrame <- NULL
-    N <- nrow(dat)
+    N <- nrow(data)
 
     if(is.null(design)) {
-        mod <- tryCatch(lm(formula, dat, ...), error = function(e) {
+        mod <- tryCatch(lm(formula, data, ...), error = function(e) {
                    print(e)
 	           return(NULL);
 	       })
@@ -173,7 +173,7 @@ linear_mod <- function(formula, dat, design=NULL, ...) {
 #' Main worker function to perform binary outcome associations.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on, can be optional if the design argument is used.
+#' @param data the data.frame to perform analysis on, can be optional if the design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
 #' @param ... are additional arguments passed on to the regression.
 #'
@@ -185,12 +185,12 @@ linear_mod <- function(formula, dat, design=NULL, ...) {
 #' }
 #' 
 #' @export
-logistic_mod <- function(formula, dat, design=NULL, ...) {
+logistic_mod <- function(formula, data, design=NULL, ...) {
     summaryFrame <- NULL
-    N <- nrow(dat)
+    N <- nrow(data)
 
     if(is.null(design)) {
-        mod <- tryCatch(glm(formula, dat, family=binomial(), ...), error = function(e) {
+        mod <- tryCatch(glm(formula, data, family=binomial(), ...), error = function(e) {
                    print(e)
 	           return(NULL);
 	       })
@@ -214,7 +214,7 @@ logistic_mod <- function(formula, dat, design=NULL, ...) {
 #' Main worker function to perform survival analysis.
 #'
 #' @param formula an R formula class object.
-#' @param dat the data.frame to perform analysis on, can be option if design argument is used.
+#' @param data the data.frame to perform analysis on, can be option if design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
 #' @param ... are additional arguments passed on to the regression.
 #'
@@ -226,13 +226,13 @@ logistic_mod <- function(formula, dat, design=NULL, ...) {
 #' }
 #'
 #' @export
-surival_mod <- function(formula, dat, design=NULL, ...) {
+surival_mod <- function(formula, data, design=NULL, ...) {
     summaryFrame <- NULL
-    N <- nrow(dat)
+    N <- nrow(data)
 
     # e.g., coxph(Surv(PERMTH_EXM, MORTSTAT) ~ RIDAGEYR + female + LBXGLU, data=suvdat)
     if(is.null(design)) {
-        mod <- tryCatch(survival::coxph(formula, dat, ...), error = function(e) {
+        mod <- tryCatch(survival::coxph(formula, data, ...), error = function(e) {
                    print(e)
 	           return(NULL);
 	       })
@@ -331,7 +331,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 	    #summaryFrame <- rbind(summaryFrame, frm)
 
 	    # going with lists!
-	    summaryFrameRaw[[i]] <- linear_mod(doForm, dat, design=design)
+	    summaryFrameRaw[[i]] <- linear_mod(doForm, data=dat, design=design)
 	}
     } else {
         if (survival::is.Surv(depvar)) {
