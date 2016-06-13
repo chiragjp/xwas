@@ -65,7 +65,7 @@ xwas.to.df <- function(data, ...) {
 #' }
 #'
 #' @export
-manhattan <- function(data, qthreshold=0.05, nlabels=6, ylab=expression(-log[10]*'(p-value)'), frame.plot=FALSE, pch=20,
+manhattan <- function(data, qthreshold=0.05, nlabels=0, ylab=expression(-log[10]*'(p-value)'), frame.plot=FALSE, pch=20,
 	              legend=FALSE, group.by=NULL, group.label=NULL, group.col=NULL, ...) {
     all <- NULL
     data.merged <- NULL
@@ -152,7 +152,9 @@ manhattan <- function(data, qthreshold=0.05, nlabels=6, ylab=expression(-log[10]
 
     cutoff <- -log10(qthreshold)
     lines(c(0, length(data.log)), c(cutoff, cutoff), col="red")
-    text(i, data.log[i], names(data.log[i]), cex=0.5, col="red", pos=4)
+    if (nlabels > 0) {
+        text(i, data.log[i], names(data.log[i]), cex=0.5, col="red", pos=4)
+    }
 }
 
 #' volcano

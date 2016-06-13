@@ -6,123 +6,163 @@ output: html_document
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(echo=TRUE)
 ```
 
 ## 1. Setup
 
-Skipping over these details for now. Assume you have compiled the library from latest Github source. Future will be CRAN (hopefully). The default build puts it into `~/.R_libs/xwas/` and assumes your R library is set accordingly.
+We'll assume you have compiled the `xwas` library from latest Github source. If you are using our provided Docker container then you can assume this is true. The two commands below will install in your R environment if necessary.
+
+```{r eval=FALSE}
+> library(devtools)
+> install_github('chiragjp/xwas')
+```
+
+If you performed a `git checkout` of the code itself and ran your own build then the default build puts the library into `~/.R_libs/xwas/` and assumes your R library is set accordingly. The command below outputs the search path for R packages.
 
 ```{r}
 .libPaths()
 ```
 
-Now you can load the `xwas` package and are good to go if no errors.
+Now you can load the `xwas` package and are good to go.
 
 ```{r}
 library(xwas)
 ```
 
-Further validate by checking the `sessionInfo()` or `search()` outputs.
+Further validate it was successfully loaded by checking the `search()` output.
 
 ```{r}
-sessionInfo()
-
-"xwas" %in% loadedNamespaces()
-
 search()
 ```
 
 ## 2. Package Survey
 
-Fully documented library and functions.
-
-```{r}
-help(xwas)
-```
-
-Load included NHANES datasets for downstream analyses.
+The `xwas` library comes with some data, load included NHANES datasets for downstream analyses.
 
 ```{r}
 data(nhanes)
-
-dat <- subset(MainTable, SDDSRVYR == 3) # subset for 2003-2004
 ```
 
-## 3. Perform General Analysis
+![Figure 1: the two `data.frames` when you load the `nhanes` data set are `MainTable` and `VarDescription`.](nhanes.png)
 
-Perform a singular linear association study, looking at how blood glucose (`LBXGLU`) varies as a result of BMI (`BMXBMI`) while adjusting for age (`RIDAGEYR`) and sex (`female`).
+The data set is divided among two `data.frame`s as diagrammed in `Figure 1`. The `MainTable` has all the individuals represented by a row and columns with the co-variates. The `VarDescription` table has the description of what the co-variates are from the columns in `MainTable`.
+
+## 3. Perform Regression Analysis
+
+**Let's look at telomere length and see what environental exposures could influence it.**
+
+First, what is the outcome variable codified as? Let's refer to the `VarDescription` table.
 
 ```{r}
-xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"))
+VarDescription[grep("telomere", VarDescription$var_desc, ignore.case=T), ]
 ```
 
-Perform across all variables, not just BMI while still adjusting for age and sex in each instance. Adjust all the p-values to account for FDR then plot all co-variates.
+Mean telomere length is codified as `TELOMEAN` in the `MainTable` by looking at the `VarDescription$var` column. From the `VarDescription$series` column we can also see that the 1999-2000 and 2001-2002 cohorts are associated with this measurement.
+
+Now lets conduct an EWAS on `TELOMEAN`, focusing only on variables present in these two cohorts where the mean telomere length (`TELOMEAN`) was measured.
 
 ```{r}
-glucose.all <- xwas(data=dat, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"))
-
-glucose.all.adjust <- p.adjust(unlist(lapply(glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} )))
-
-manhattan(glucose.all.adjust, nlabels=3)
+VarDescription.telo <- subset(VarDescription, series == '1999-2000' | series == '2001-2002')
 ```
 
-Plot just the significant co-variates of glucose under the threshold of significance. We will plot both the graphs side-by-side for easier comparison.
+Quick check on what this looks like by tabulating the `data.frame`. 
 
 ```{r}
-glucose.all.sig <- subset(glucose.all.adjust, glucose.all.adjust < 0.05)
-
-par(mfrow=c(1,2))
-manhattan(glucose.all.adjust, nlabels=3, main="Glucose vs BMI (All)")
-manhattan(glucose.all.sig, nlabels=3, main="Glucose vs BMI (Sig-only)")
-par(mfrow=c(1,1))
+sort(table(VarDescription.telo$category))
+pie(sort(table(VarDescription.telo$category)))
 ```
 
-## 3. Perform Survey-weighted Analysis
-
-Replicate the study using survey-weighted analysis built on the `survey` package. First requires the definition of a survey design using the `survey::svdesign` object. From here on out you can use the exact same function calls you used previously with the added input argument in the function of `design`.
+The top two categories are "food component recall" and "pharmaceutical" with 256 and 252 entries, respectively. Let us focus our EWAS on the environmental exposures.
 
 ```{r}
-dsn <- svydesign(id=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T, data=subset(MainTable, WTMEC2YR > 0))
+useTheseCategories <- c('dioxins', 'furans', 'diakyl', 'heavy metals', 'hormone', 'hydrocarbons', 'pcbs', 'pesticides', 'physical fitness', 'phytoestrogens', 'polyflourochemicals', 'smoking behavior', 'smoking family', 'volatile compounds')
+useTheseCategories <- sort(useTheseCategories) # store pre-sorted for easier processing
+
+VarDescription.telo <- VarDescription.telo[VarDescription.telo$category %in% useTheseCategories, ]
 ```
 
-Perform a survey-weighted regression analysis of glucose as a function of BMI while adjusting for age and sex.
+Another inspection will confirm that we're looking at much more tractable set of data.
 
 ```{r}
-xlm(data=dat, depvar="LBXGLU", varname="BMXBMI", adjvars=c("RIDAGEYR", "female"), design=dsn)
+pie(sort(table(VarDescription.telo$category)))
+sort(table(VarDescription.telo$category))
 ```
+
+The top two categories are now "pesticides" and "pcbs" with 64 and 59 entries, respectively. We're close to performing the actual EWAS but will now define specific co-variates to adjust for in each regression. The vector is defined below as `adjustfor` and then the combined with unique co-variates in our cohort as well as the dependent variable of mean telomere length we are interested in studying (`TELOMEAN`). The `newData` variable will contain all the pertinent records for analysis.
 
 ```{r}
-svy.glucose.all <- xwas(data=dat, depvar="LBXGLU", adjvars=c("RIDAGEYR", "female"), design=dsn)
-
-svy.glucose.all.adjust <- p.adjust(unlist(lapply(svy.glucose.all, function(x) {return(x[2,]$"Pr(>|t|)")} )))
-
-manhattan(svy.glucose.all.adjust, nlabels=3)
+adjustfor <- c('RIDAGEYR', 'SDMVPSU', 'SDMVSTRA', 'WTMEC2YR', 'female', 'mexican', 'black', 'other_eth')
+variablesToKeep <- c(unique(VarDescription.telo$var), 'TELOMEAN', adjustfor)
+newData <- subset(MainTable, SDDSRVYR <= 2)[, variablesToKeep] ## only keep those that are 
 ```
 
-Plot just the significant co-variates of glucose under the threshold of significance.
+The `xwas` library also has integrated support for the `survey` package to perform survey-weighted analysis. You will have to define your own `survey::svydesign` objects but it's taken as an argument to most `xwas` functions. We define our study in the `dsn` variable then perform an EWAS both with and with-out the survey design for comparison.
 
 ```{r}
-svy.glucose.all.sig <- subset(svy.glucose.all.adjust, glucose.all.adjust < 0.05)
+dsn <- svydesign(ids=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T, data=subset(newData, WTMEC2YR > 0)) # the survey design
 
-par(mfrow=c(1,2))
-manhattan(svy.glucose.all.adjust, nlabels=3, main="Svy Glucose vs BMI (All)")
-manhattan(svy.glucose.all.sig, nlabels=3, main="Svy Glucose vs BMI (Sig-only)")
-par(mfrow=c(1,1))
+telo.norm <- xwas(data=subset(newData, WTMEC2YR > 0), depvar="TELOMEAN", adjvars=adjustfor, verbose=F) # ewas WITHOUT survey design
+telo.surv <- xwas(data=subset(newData, WTMEC2YR > 0), depvar="TELOMEAN", adjvars=adjustfor, design=dsn, verbose=F) # ewas WITH survey design
 ```
 
-Side-by-side comparison of non-survey and survey analysis for glucose vs BMI.
+As you can see the EWAS with survey-weighted analysis takes longer to perform but it is technically more accurate as you can see within the visualizations below.
+
+## 4. Visualization
+
+Now that we have performed the heavy lifting of EWAS analysis we can use the packaged visualization functions, specifically `manhattan`, `volcano`, and `qqplot` to gather insights into the relationship of environmental exposures to mean telomere length (`TELOMEAN`).
 
 ```{r}
-par(mfrow=c(1,2))
-manhattan(glucose.all.sig, nlabels=3, main="Non-svy Glucose vs BMI")
-manhattan(svy.glucose.all.sig, nlabels=3, main="Svy Glucose vs BMI")
-par(mfrow=c(1,1))
+par(mfrow=c(1,1), xpd=TRUE) # setup to plot outside of area if necessary
 ```
 
-Future speed ups.
+First look at a Manhattan plot of the telomere length without survey-weighted analysis.
 
 ```{r}
-#system.time(xwas(data=nhanes, depvar="LBXGLU", permute=10, n=1))
-#system.time(xwas(data=nhanes, depvar="LBXGLU", permute=10, n=4))
+manhattan(telo.norm)
 ```
+
+Since we looked at the co-variates by sub-categories of environmental exposure it also makes sense to show this visually. If we provided a mapping of variables to categories the Manhattan plot can show this.
+
+```{r}
+groups <- subset(VarDescription, category %in% useTheseCategories)[, c("category", "var")]
+groups <- unique(groups)
+```
+
+Now by passing in this additional information we can show a more visually clear relationship. Let's look at the telomere study without survey-weighted analysis.
+
+```{r}
+manhattan(telo.norm, group.by=groups, legend=T, ylim=c(0,14), nlabels=2)
+```
+
+Now we can compare this to the study done **with** survey-weighted analysis. You can see that there is less noise in the results and the significant co-variates are clearer.
+
+```{r}
+manhattan(telo.surv, group.by=groups, legend=T, ylim=c(0,14), nlabels=2)
+```
+
+Another `xwas` visualization is the volcano plot that allows you to quickly discern both significance and effect size.
+
+```{r}
+volcano(telo.norm, xlim=c(-.2,.2))
+```
+
+Notice how the visualizations change with the survey-weighted analysis results.
+
+```{r}
+volcano(telo.surv, xlim=c(-.2,.2))
+```
+
+An `xwas` visualization to determine significance is the `qqplot`. Any deviation from the line `y=x` indicates true signal in the associations. 
+
+```{r}
+qqplot(telo.norm)
+```
+
+Now with the survey-weighted data you can see that the signal:noise ratio is much more distinct.
+
+```{r}
+qqplot(telo.surv)
+```
+
+Additional visualizations and other features coming soon in future releases.

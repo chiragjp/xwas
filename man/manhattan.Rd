@@ -4,7 +4,7 @@
 \alias{manhattan}
 \title{manhattan}
 \usage{
-manhattan(data, qthreshold = 0.05, nlabels = 6, ylab = expression(-log[10]
+manhattan(data, qthreshold = 0.05, nlabels = 0, ylab = expression(-log[10]
   * "(p-value)"), frame.plot = FALSE, pch = 20, legend = FALSE,
   group.by = NULL, group.label = NULL, group.col = NULL, ...)
 }
