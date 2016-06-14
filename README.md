@@ -5,11 +5,9 @@
 X-Wide Association Analysis (XWAS) is an R-package.
 
 ##### TODO
-- sample data files: HIV and NHANES
-- add introspection to detect data types?
+- sample data files: HIV
+- add introspection to detect data types
 - script to collect results — use https://github.com/dgrtwo/broom
-- script to compute FDR
-- script to wrap the above into one command
 - add in support for fixed effect/random effect meta analyses
 - correlation heatmap
 - get to work with HIV dataset
