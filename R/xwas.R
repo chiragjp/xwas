@@ -53,9 +53,8 @@ verify.survey <- function(design, verbose=TRUE) {
 #'
 #' @export
 addToBase <- function(base_formula, adjustingVariables) {
-    if (length(adjustingVariables)) {
-       addStr <- as.formula(sprintf('~ . + %s', paste(adjustingVariables, collapse='+')))
-       base_formula <- update.formula(base_formula, addStr)
+    for (var in adjustingVariables) {
+       base_formula <- update.formula( base_formula, as.formula(sprintf('~ . + %s', var)) )
     }
 	
     return(base_formula)
@@ -70,22 +69,47 @@ log_variable_name <- function(variable) {
     }
 }
 
-#' Determines if column in the main data.frame is categorical.
+#' Determines if column(s) in the vector or data.frame is/are categorical.
 #'
-#' @param mainTab is a data.frame representing the data to be analyzed.
-#' @param varname is the name of a column of the data.frame to be determined if it is a categorical variable or not based on the number of factors.
+#' @param data is a data.frame or vector representing the data to be analyzed.
+#' @param varname is the name of a column of the data.frame to be determined if it is a categorical variable or not based on the number of factors. It can be evaluated singularly (if a string) or if it is a vector of strings an equal length vector will be returned. If data is a vector then this argument can be optional, if it is optional and a data.frame is provided for the input data then all columns will be evaluated.
+#' @param lower is a numeric to set the lower bound, number of unique entries is GREATER THAN this value. Default is 1 (at least 2+ uniques).
+#' @param upper is a numeric to set the upper bound, number of unique entries is LESS THAN this value. Default is 11 (less than 11 uniques).
 #'
-#' @return A factorization of the column of the data.frame.
+#' @return a vector indicating if the data vector or data.frame column(s) are likely categorical variables by the presence of more than 2 but less than 10 unique counts.
 #'
 #' @examples
+#' \dontrun{
+#' is.categorical()
+#' }
 #' 
 #' @export
-is_variable_categorical <- function(mainTab, varname) {
-    catTab <- table(mainTab[, varname])
+is.categorical <- function(data, varname=NULL, lower=1, upper=11) {
+    catTab <- NULL
+    result <- c()
 
-    if (length(catTab) <= 10 & length(catTab) > 2) {
-        return(sprintf('factor(%s)', varname))
+    if (is.vector(data)) {
+        catTab <- as.data.frame(data)
+	varname <- colnames(catTab)
+    } else {
+	if (is.null(varname)) {
+	    catTab <- data
+	    varname <- colnames(catTab)	    
+	} else {
+            catTab <- data[, varname]
+	}
     }
+
+    for (name in varname) {
+        count <- length(table(catTab[, name]))
+       	if (count < upper & count > lower) {
+	    result <- c(result, TRUE)
+	} else {
+	    result <- c(result, FALSE)
+	}
+    }
+
+    return(result)
 }
 
 #' @export
@@ -134,6 +158,7 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
 #' @param formula an R formula class object.
 #' @param data the data.frame to perform analysis on, can be optional if the design argument is used.
 #' @param design a survey::svydesign object that has the experimental design.
+#' @param verbose is if we print errors, TRUE by default.
 #' @param ... are additional arguments passed on to the regression.
 #'
 #' @return A data.frame representing the linear association study.
@@ -144,18 +169,20 @@ qvalue_perm <- function(pvals, randData, numIter=100) {
 #' }
 #'
 #' @export
-linear_mod <- function(formula, data, design=NULL, ...) {
+linear_mod <- function(formula, data, design=NULL, verbose=TRUE, ...) {
     summaryFrame <- NULL
     N <- nrow(data)
 
     if(is.null(design)) {
         mod <- tryCatch(lm(formula, data, ...), error = function(e) {
-                   print(e)
+                   if (verbose) print(e)
+		   
 	           return(NULL);
 	       })
     } else {
         mod <- tryCatch(survey::svyglm(formula, design=design, ...), error = function(e) {
-                   print(e)
+                   if (verbose) print(e)
+		   
 	           return(NULL);
 	       })        
     }
@@ -265,7 +292,7 @@ surival_mod <- function(formula, data, design=NULL, ...) {
 #' @param categorical is a binary option representing whether or not the variable is categorical.
 #' @param verbose is a boolean that determines if we print extra information. Not recommend for an XWAS, only one off analyses.
 #' 
-#' @return A data.frame object representing the regression.
+#' @return a data.frame object representing the regression.
 #' 
 #' @examples
 #' \dontrun{
@@ -399,11 +426,11 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, perm
 
     # should only have 1 (if any) dependent variable
     if (length(depvar) > 1) {
-        stop("need to specify a valid outcome/independent variable.")    
+        stop("need to specify a valid outcome/independent variable.")
     }
 
     verify.survey(design, verbose) # parses warnings on survey::svydesign usage
-
+    
     test <- list()
     space <- NULL
     parallel <- NULL
@@ -495,9 +522,9 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, perm
     	for (testvar in space) {
     	    if (verbose) {
 	        if (is.null(adjvars)) {
-    	            cat( paste("Unadjusted testing for", testvar, "var on", varname, which(space == testvar), "of", length(space), "\n") ) # DEBUG
+    	            cat( paste("Unadjusted testing for", testvar, "var on", depvar, which(space == testvar), "of", length(space), "\n") ) # DEBUG
 	    	} else {
-    	            cat( paste("Adjusted testing for", testvar, "var on", varname, which(space == testvar), "of", length(space), "\n") ) # DEBUG
+    	            cat( paste("Adjusted testing for", testvar, "var on", depvar, which(space == testvar), "of", length(space), "\n") ) # DEBUG
 		}
 	    }
 

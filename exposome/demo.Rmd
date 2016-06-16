@@ -89,21 +89,31 @@ pie(sort(table(VarDescription.telo$category)))
 sort(table(VarDescription.telo$category))
 ```
 
-The top two categories are now "pesticides" and "pcbs" with 64 and 59 entries, respectively. We're close to performing the actual EWAS but will now define specific co-variates to adjust for in each regression. The vector is defined below as `adjustfor` and then the combined with unique co-variates in our cohort as well as the dependent variable of mean telomere length we are interested in studying (`TELOMEAN`). The `newData` variable will contain all the pertinent records for analysis.
+The top two categories are now "pesticides" and "pcbs" with 64 and 59 entries, respectively. We're close to performing the actual EWAS but will now define specific co-variates to adjust for in each regression. The vector is defined below as `adjustfor` and then the combined with unique co-variates in our cohort as well as the dependent variable of mean telomere length we are interested in studying (`TELOMEAN`). 
+
+We are also going to derive a new variable `RIDAGEYR2` which is the age-squared to test for non-linear effects associated with age.
 
 ```{r}
-adjustfor <- c('RIDAGEYR', 'SDMVPSU', 'SDMVSTRA', 'WTMEC2YR', 'female', 'mexican', 'black', 'other_eth')
-variablesToKeep <- c(unique(VarDescription.telo$var), 'TELOMEAN', adjustfor)
+MainTable$RIDAGEYR2 <- MainTable$RIDAGEYR^2
+```
+
+The `newData` variable will contain all the pertinent records for analysis. However, the data is right-skewed so we both scale and log transform the data into a new object.
+
+```{r}
+adjustfor <- c('RIDAGEYR', 'RIDAGEYR2', 'female', 'mexican', 'black', 'other_eth', 'other_hispanic', 'INDFMPIR')
+variablesToKeep <- c(unique(VarDescription.telo$var), 'TELOMEAN', adjustfor, 'SDMVPSU', 'SDMVSTRA', 'WTMEC2YR', 'WTMEC4YR')
 newData <- subset(MainTable, SDDSRVYR <= 2)[, variablesToKeep] ## only keep those that are 
+
+newLogData <- cbind(newData[, is.categorical(newData, lower=0)], apply(newData[, !is.categorical(newData, lower=0)], 2, function(x) { scale(log(x+1e-10)) })) # log transform the data
 ```
 
 The `xwas` library also has integrated support for the `survey` package to perform survey-weighted analysis. You will have to define your own `survey::svydesign` objects but it's taken as an argument to most `xwas` functions. We define our study in the `dsn` variable then perform an EWAS both with and with-out the survey design for comparison.
 
 ```{r}
-dsn <- svydesign(ids=~SDMVPSU, strata=~SDMVSTRA, probs=~WTMEC2YR, nest=T, data=subset(newData, WTMEC2YR > 0)) # the survey design
+dsn <- svydesign(ids=~SDMVPSU, strata=~SDMVSTRA, weight=~WTMEC4YR, nest=T, data=subset(newLogData, WTMEC4YR > 0)) # create the design object
 
-telo.norm <- xwas(data=subset(newData, WTMEC2YR > 0), depvar="TELOMEAN", adjvars=adjustfor, verbose=F) # ewas WITHOUT survey design
-telo.surv <- xwas(data=subset(newData, WTMEC2YR > 0), depvar="TELOMEAN", adjvars=adjustfor, design=dsn, verbose=F) # ewas WITH survey design
+telo.norm <- xwas(data=subset(newLogData, WTMEC4YR > 0), depvar="TELOMEAN", adjvars=adjustfor, verbose=F) # ewas WITHOUT survey design
+telo.surv <- xwas(data=subset(newLogData, WTMEC4YR > 0), depvar="TELOMEAN", adjvars=adjustfor, design=dsn, verbose=F) # ewas WITH survey design
 ```
 
 As you can see the EWAS with survey-weighted analysis takes longer to perform but it is technically more accurate as you can see within the visualizations below.
@@ -132,37 +142,61 @@ groups <- unique(groups)
 Now by passing in this additional information we can show a more visually clear relationship. Let's look at the telomere study without survey-weighted analysis.
 
 ```{r}
-manhattan(telo.norm, group.by=groups, legend=T, ylim=c(0,14), nlabels=2)
+manhattan(telo.norm, group.by=groups, legend=T, xlab="", ylim=c(0,14), nlabels=5)
 ```
 
 Now we can compare this to the study done **with** survey-weighted analysis. You can see that there is less noise in the results and the significant co-variates are clearer.
 
 ```{r}
-manhattan(telo.surv, group.by=groups, legend=T, ylim=c(0,14), nlabels=2)
+manhattan(telo.surv, group.by=groups, legend=T, xlab="", ylim=c(0,14), nlabels=5)
+```
+
+Given the results, let's convert to a more readable table and codify all the variables to their descriptions. We'll just print out the top 10 results by significance.
+
+```{r}
+top <- xwas.to.df(telo.surv) # convert xwas results to a data.frame
+
+# create a table with the labels and descriptions for each variable used
+labels <- subset(VarDescription, category %in% useTheseCategories)[, c("var", "var_desc", "category")]
+labels <- labels[!duplicated(labels$var), ]
+rownames(labels) <- labels$var
+
+# match variables from the xwas output to the labels object
+top <- merge(top, labels, all.x=TRUE, by="row.names")
+rownames(top) <- top$Row.names
+top <- top[, -which(colnames(top) %in% c("Row.names", "var"))]
+top <- top[order(top$q), ]
+
+# show the top 10 results with p-values and descriptions
+head(top, n=10)
 ```
 
 Another `xwas` visualization is the volcano plot that allows you to quickly discern both significance and effect size.
 
 ```{r}
-volcano(telo.norm, xlim=c(-.2,.2))
+volcano(telo.norm, xlim=c(-.2,.2), xlab="Association Size")
 ```
 
 Notice how the visualizations change with the survey-weighted analysis results.
 
 ```{r}
-volcano(telo.surv, xlim=c(-.2,.2))
+volcano(telo.surv, xlim=c(-.2,.2), xlab="Association Size")
 ```
+
+We can also compare our output above to [Figure 2 from the paper](http://ije.oxfordjournals.org/content/early/2016/04/07/ije.dyw043/F2.expansion.html) we're replicating.
+
+![Figure 2: this is grabbed from Figure 2 from the paper we're replicating for comparison, link above.](chirag-f2.gif)
 
 An `xwas` visualization to determine significance is the `qqplot`. Any deviation from the line `y=x` indicates true signal in the associations. 
 
 ```{r}
-qqplot(telo.norm)
+qqplot(telo.norm, xlim=c(0,14), ylim=c(0,14))
 ```
 
 Now with the survey-weighted data you can see that the signal:noise ratio is much more distinct.
 
 ```{r}
-qqplot(telo.surv)
+qqplot(telo.surv, xlim=c(0,14), ylim=c(0,14))
 ```
 
 Additional visualizations and other features coming soon in future releases.

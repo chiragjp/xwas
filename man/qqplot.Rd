@@ -22,7 +22,7 @@ qqplot(data, xlab = expression(-log[10] * "(p-expected)"),
 none
 }
 \description{
-Takes a data object that is either the output of the
+Takes a data object that is either the output of the xwas function or a vector of p-values.
 }
 \examples{
 \dontrun{

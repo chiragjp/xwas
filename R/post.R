@@ -194,7 +194,7 @@ volcano <- function(data, qthreshold=0.05, xlab="Effect", ylab=expression(-log[1
 
 #' qqplot
 #'
-#' Takes a data object that is either the output of the
+#' Takes a data object that is either the output of the xwas function or a vector of p-values.
 #'
 #' @param data is an object either a numeric character vector of p-values or the output of the xwas function from which that information can be derived.
 #' @param xlab is a default label for the x-axis passed on to the plot function.
@@ -229,8 +229,8 @@ qqplot <- function(data, xlab=expression(-log[10]*'(p-expected)'), ylab=expressi
     p.expected  <- punif(1:length(pvalues)/length(pvalues))
 
     range <- c(min(-log10(p.empirical), -log10(p.expected)),
-    	       max(-log10(p.empirical), -log10(p.expected)))
-    
-    plot(-log10(p.expected), -log10(p.empirical), xlab=xlab, ylab=ylab, xlim=range, ylim=range, pch=pch, ...)
+               max(-log10(p.empirical), -log10(p.expected)))	 
+
+    plot(-log10(p.expected), -log10(p.empirical), xlab=xlab, ylab=ylab, pch=pch, ...)
     lines(c(range[1], range[2]), c(range[1], range[2]), col="red")
 }

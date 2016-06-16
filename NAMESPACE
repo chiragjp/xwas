@@ -2,8 +2,8 @@
 
 export(addToBase)
 export(categorize_varname)
+export(is.categorical)
 export(is.survey)
-export(is_variable_categorical)
 export(linear_mod)
 export(log_variable_name)
 export(logistic_mod)
