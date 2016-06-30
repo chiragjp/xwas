@@ -4,13 +4,15 @@
 \alias{xwas}
 \title{xwas}
 \usage{
-xwas(data, depvar = NULL, varname = NULL, adjvars = c(), design = NULL,
-  permute = 0, n = 1, verbose = TRUE)
+xwas(data, depvar, timevar = NULL, varname = NULL, adjvars = c(),
+  design = NULL, permute = 0, n = 1, verbose = TRUE)
 }
 \arguments{
 \item{data}{is the data.frame containing what to analyze.}
 
 \item{depvar}{is required and the outcome or dependent variable we are looking to analyze in the context of multiple factors.}
+
+\item{timevar}{is optional and if provided will be used in conjunction with the depvar to create a survival::Survey object for survival analysis.}
 
 \item{varname}{is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.}
 

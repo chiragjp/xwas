@@ -4,13 +4,15 @@
 \alias{xlm}
 \title{xlm}
 \usage{
-xlm(data, depvar = NULL, varname = NULL, adjvars = c(), design = NULL,
-  permute = 0, categorical = 0, verbose = TRUE)
+xlm(data, depvar, timevar = NULL, varname = NULL, adjvars = c(),
+  design = NULL, permute = 0, categorical = 0, verbose = TRUE)
 }
 \arguments{
 \item{data}{is a data.frame containing the data to perform analysis on.}
 
 \item{depvar}{a character vector with a column name for the dependent variable.}
+
+\item{timevar}{is a character vector with the column name for the time variable in survival analysis.}
 
 \item{varname}{a character vector with a column name for the independent variable.}
 
@@ -29,7 +31,8 @@ a data.frame object representing the regression.
 }
 \description{
 Performs a singular linear regression or binary outcomes association study. It requires you to specify the exact column variable 
-and other permutation details. It does a lot of blind analysis and requires the xwas function to determine other meta-characteristics.
+and other permutation details. It does a lot of blind analysis and requires the xwas function to determine other information such as
+sanity checking around input arguments.
 }
 \examples{
 \dontrun{

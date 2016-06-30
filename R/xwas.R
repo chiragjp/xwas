@@ -99,11 +99,12 @@ is.categorical <- function(data, varname=NULL, lower=1, upper=11) {
         catTab <- as.data.frame(data)
 	varname <- colnames(catTab)
     } else {
+        catTab <- data
+	
 	if (is.null(varname)) {
-	    catTab <- data
-	    varname <- colnames(catTab)	    
+	    varname <- colnames(data)
 	} else {
-            catTab <- data[, varname]
+            #catTab <- data[, varname]
 	}
     }
 
@@ -288,10 +289,12 @@ surival_mod <- function(formula, data, design=NULL, ...) {
 #' xlm
 #'
 #' Performs a singular linear regression or binary outcomes association study. It requires you to specify the exact column variable 
-#' and other permutation details. It does a lot of blind analysis and requires the xwas function to determine other meta-characteristics.
+#' and other permutation details. It does a lot of blind analysis and requires the xwas function to determine other information such as
+#' sanity checking around input arguments.
 #' 
 #' @param data is a data.frame containing the data to perform analysis on.
 #' @param depvar a character vector with a column name for the dependent variable.
+#' @param timevar is a character vector with the column name for the time variable in survival analysis.
 #' @param varname a character vector with a column name for the independent variable.
 #' @param adjvars a list of variables to adjust for in the regression.
 #' @param design is an optional survey::svydesign object for weighted analysis.
@@ -308,13 +311,7 @@ surival_mod <- function(formula, data, design=NULL, ...) {
 #' }
 #' 
 #' @export
-xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, categorical=0, verbose=TRUE) {
-    if (permute < 0) {
-        stop("non-negative value required for permute.")
-    }
-
-    verify.survey(design, verbose) # parses warnings on survey::svydesign usage
-    
+xlm <- function(data, depvar, timevar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, categorical=0, verbose=TRUE) {
     intVar <- NULL # fix in the future, currently this is just a new name for adjvars
     
     keepVars <- c(depvar, varname, adjvars) # reduce data.frame space to data we want to study
@@ -340,12 +337,16 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
     nullmod  <- NULL
     
     if (categorical) {
-        baseform <- as.formula(sprintf('I(scale(%s)) ~ %s', depVar.formula, categorize_varname(varname, dat[, varname])))
-        nullmod  <- as.formula(sprintf('I(scale(%s)) ~ %s', depVar.formula, categorize_varname(varname, dat[, varname])))
-    #} else if (survival::is.Surv(depvar)) {
-    } else { # if (!categorical) {
-        baseform <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depVar.formula, varname))
-	nullmod  <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depVar.formula, varname))
+        baseform <- as.formula(sprintf('I(scale(%s)) ~ %s', depvar, categorize_varname(varname, dat[, varname])))
+        nullmod  <- as.formula(sprintf('I(scale(%s)) ~ %s', depvar, categorize_varname(varname, dat[, varname])))
+    } else if (!is.null(timevar)) {
+        # timevar specified so we're doing survival analysis
+        baseform <- as.formula(sprintf('Surv(%s, %s) ~ %s', timevar, depvar, varname))
+	nullmod  <- NULL # define in the future :)
+    } else {
+        # quantitative outcome so linear regression
+        baseform <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depvar, varname))
+	nullmod  <- as.formula(sprintf('I(scale(%s)) ~ I(scale(%s))', depvar, varname))
 
 	if (!is.null(intVar)) {
 	    # intVar is assumed to be in the adjustmentVariables
@@ -377,9 +378,11 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 	    summaryFrameRaw[[i]] <- linear_mod(doForm, data=dat, design=design)
 	}
     } else {
-        if (survival::is.Surv(depvar)) {
+        if (!is.null(timevar)) {
+	    # survival analysis   
             summaryFrame <- survival_mod(formula=doForm, data=dat, design=design)
 	} else {
+	    # linear analysis
             summaryFrame <- linear_mod(formula=doForm, data=dat, design=design)
 	}
     }
@@ -412,6 +415,7 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 #'
 #' @param data is the data.frame containing what to analyze.
 #' @param depvar is required and the outcome or dependent variable we are looking to analyze in the context of multiple factors.
+#' @param timevar is optional and if provided will be used in conjunction with the depvar to create a survival::Survey object for survival analysis.
 #' @param varname is optional and the independent variable, without being specified we will consider all variables. If it is provided there will only be 1 regression test performed.
 #' @param adjvars is optional and is a vector of a set of variables to adjust for under every condition, if not specified we will scan all variables without adjusting on a first pass.
 #' @param design a survey::svydesign object that has the experimental design.
@@ -429,22 +433,27 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
 #' }
 #'
 #' @export
-xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, n=1, verbose=TRUE) {
+xwas <- function(data, depvar, timevar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, n=1, verbose=TRUE) {
+    # check for actual data to analyze
+    if (is.null(data)) {
+        stop("data variable not specified, need data to analyze.")
+    }
+
     # require a non-negative set of permutations
     if (permute < 0) {
         stop("non-negative value required for permute.")
     }
 
     # need an outcome to test for
-    if (is.null(depvar) | nchar(depvar) < 1) {
-        stop("can only have 1 or 0/NULL depvar, dependent variables.")
+    if (is.null(depvar) | !is.character(depvar) | !depvar %in% colnames(data)) {
+        stop("depvar must be defined, be a character class, and exist within the data object.")
     }
 
-    # should only have 1 (if any) dependent variable
-    if (length(depvar) > 1) {
-        stop("need to specify a valid outcome/independent variable.")
+    # test if we are doing survival analysis by if a variable for time (timevar) is specified
+    if (!is.null(timevar) & !time %in% colnames(data)) {
+        stop("timevar can't be found within the data object.")
     }
-
+    
     verify.survey(design, verbose) # parses warnings on survey::svydesign usage
     
     test <- list()
@@ -544,7 +553,7 @@ xwas <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, perm
 		}
 	    }
 
-	    test[[testvar]] <- xlm(data=data, depvar=depvar, varname=testvar, adjvars=adjvars, design=design, permute=permute, verbose=verbose)
+	    test[[testvar]] <- xlm(data=data, depvar=depvar, timevar=timevar, varname=testvar, adjvars=adjvars, design=design, permute=permute, verbose=verbose)
         }
     }
 
