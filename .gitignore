@@ -1,5 +1,6 @@
 *~
 .*~
+.DS_Store
 .Rproj
 .Rhistory
 .RData
@@ -8,3 +9,4 @@ xwas.Rcheck
 xwas_*.tar.gz
 tmp
 exposome/demo_files/
+survival

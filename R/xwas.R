@@ -69,6 +69,13 @@ log_variable_name <- function(variable) {
     }
 }
 
+#' http://www.r-statistics.com/2013/05/log-transformations-for-skewed-and-wide-distributions-from-practical-data-science-with-r/
+#' 
+#' @export
+unskew <- function(x) {
+    ifelse(abs(x) <= 1, 0, sign(x)*log10(abs(x)))
+}
+
 #' Determines if column(s) in the vector or data.frame is/are categorical.
 #'
 #' @param data is a data.frame or vector representing the data to be analyzed.
@@ -313,9 +320,18 @@ xlm <- function(data, depvar=NULL, varname=NULL, adjvars=c(), design=NULL, permu
     keepVars <- c(depvar, varname, adjvars) # reduce data.frame space to data we want to study
     dat <- data[complete.cases(data[, keepVars]), keepVars]
 
+    # not enough data points
     if (nrow(dat) < 1) {
-        if (verbose) warning("insufficient number of cases.")
+        if (verbose) warning(paste("insufficient number of cases for", depvar))
 	
+        return(NULL)
+    }
+
+    # not enough types of data points
+    # regression won't converge, return NULL, i.e. skip
+    if (length(table(dat[, varname])) <= 1) {
+        if (verbose) warning(paste("skipping", depvar, "only has 1 or fewer variable categories so regression won't converge"))
+
         return(NULL)
     }
     

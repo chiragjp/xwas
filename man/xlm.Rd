@@ -25,7 +25,7 @@ xlm(data, depvar = NULL, varname = NULL, adjvars = c(), design = NULL,
 \item{verbose}{is a boolean that determines if we print extra information. Not recommend for an XWAS, only one off analyses.}
 }
 \value{
-A data.frame object representing the regression.
+a data.frame object representing the regression.
 }
 \description{
 Performs a singular linear regression or binary outcomes association study. It requires you to specify the exact column variable 

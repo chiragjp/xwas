@@ -4,7 +4,7 @@
 \alias{linear_mod}
 \title{linear_mod}
 \usage{
-linear_mod(formula, data, design = NULL, ...)
+linear_mod(formula, data, design = NULL, verbose = TRUE, ...)
 }
 \arguments{
 \item{formula}{an R formula class object.}
@@ -12,6 +12,8 @@ linear_mod(formula, data, design = NULL, ...)
 \item{data}{the data.frame to perform analysis on, can be optional if the design argument is used.}
 
 \item{design}{a survey::svydesign object that has the experimental design.}
+
+\item{verbose}{is if we print errors, TRUE by default.}
 
 \item{...}{are additional arguments passed on to the regression.}
 }
