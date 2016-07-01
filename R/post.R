@@ -23,12 +23,43 @@
 xwas.to.df <- function(data, ...) {
     if (!is.list(data)) warning("expecting data argument to be of type list.")
 
-    data.p <- unlist(lapply(data, function(x) {return(x[2,]$"Pr(>|t|)")} ))
+    data.p <- NULL
+    
+    var <- NULL
+    effect <- NULL
+    prob <- NULL
+
+    # dependent variable is first row in coxph output
+    if ("coef" %in% colnames(data[[1]])) {
+        var <- 1
+	effect <- "exp(coef)"
+	prob <- "Pr(>|z|)"
+    }
+
+    if ("Estimate" %in% colnames(data[[1]])) {
+        var <- 2
+	effect <- "Estimate"
+
+	# linear regression
+	if ("t value" %in% colnames(data)) {
+	    prob <- "Pr(>|t|)"
+	}
+
+	# logistic regression
+    	if ("z value" %in% colnames(data)) {
+	    prob <- "Pr(>|z|)"
+	}
+    }
+
+    if (is.null(var)) {
+        stop("unrecognized xwas output")
+    }
+
+    data.p <- unlist(lapply(data, function(x) {return(x[var, prob])} ))
 
     data.x <- c()
-    for (var in names(data.p)) {
-    	data.x <- c(data.x, data[[var]][2,]$Estimate)
-    
+    for (depvar in names(data.p)) {
+    	data.x <- c(data.x, data[[depvar]][var, effect])
     }
     names(data.x) <- names(data.p)
 

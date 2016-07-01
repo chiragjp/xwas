@@ -261,7 +261,7 @@ logistic_mod <- function(formula, data, design=NULL, ...) {
 #' }
 #'
 #' @export
-surival_mod <- function(formula, data, design=NULL, ...) {
+survival_mod <- function(formula, data, design=NULL, ...) {
     summaryFrame <- NULL
     N <- nrow(data)
 
@@ -314,7 +314,7 @@ surival_mod <- function(formula, data, design=NULL, ...) {
 xlm <- function(data, depvar, timevar=NULL, varname=NULL, adjvars=c(), design=NULL, permute=0, categorical=0, verbose=TRUE) {
     intVar <- NULL # fix in the future, currently this is just a new name for adjvars
     
-    keepVars <- c(depvar, varname, adjvars) # reduce data.frame space to data we want to study
+    keepVars <- c(depvar, timevar, varname, adjvars) # reduce data.frame space to data we want to study
     dat <- data[complete.cases(data[, keepVars]), keepVars]
 
     # not enough data points
@@ -450,7 +450,7 @@ xwas <- function(data, depvar, timevar=NULL, varname=NULL, adjvars=c(), design=N
     }
 
     # test if we are doing survival analysis by if a variable for time (timevar) is specified
-    if (!is.null(timevar) & !time %in% colnames(data)) {
+    if (!is.null(timevar) & !timevar %in% colnames(data)) {
         stop("timevar can't be found within the data object.")
     }
     
